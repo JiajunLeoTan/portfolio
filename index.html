@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leo Tan — Portfolio</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -81,6 +84,8 @@
             width: 22px;
             height: 22px;
             stroke-width: 2;
+            flex-shrink: 0;
+            display: block;
         }
 
         .nav-links {
@@ -612,7 +617,15 @@
 <!-- NAV -->
 <nav>
     <a href="#hero" class="nav-logo" aria-label="Leo Tan home">
-        <i data-lucide="file-terminal"></i>
+        <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <path d="m8 16 2-2-2-2"></path>
+            <path d="M12 18h4"></path>
+        </svg>
         <span>leo</span>
     </a>
     <ul class="nav-links">
@@ -1049,10 +1062,6 @@
         }, { threshold: 0.1 });
         cardObs.observe(card);
     });
-</script>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script>
-    lucide.createIcons();
 </script>
 </body>
 </html>
