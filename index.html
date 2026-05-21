@@ -66,11 +66,21 @@
         }
 
         .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
             font-family: var(--mono);
             font-size: 1.05rem;
             font-weight: 700;
             color: var(--accent);
             letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+
+        .nav-logo svg {
+            width: 22px;
+            height: 22px;
+            stroke-width: 2;
         }
 
         .nav-links {
@@ -601,7 +611,10 @@
 
 <!-- NAV -->
 <nav>
-    <div class="nav-logo">&lt;leo /&gt;</div>
+    <a href="#hero" class="nav-logo" aria-label="Leo Tan home">
+        <i data-lucide="file-terminal"></i>
+        <span>leo</span>
+    </a>
     <ul class="nav-links">
         <li><a href="#about">about</a></li>
         <li><a href="#experience">experience</a></li>
@@ -1036,6 +1049,10 @@
         }, { threshold: 0.1 });
         cardObs.observe(card);
     });
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
 </script>
 </body>
 </html>
