@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoboCart — Leo Tan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:           #070a0f;
+            --bg-surface:   #0d1117;
+            --bg-card:      #0f1720;
+            --border:       #1a2333;
+            --border-hover: #2a3a50;
+            --accent:       #00c896;
+            --accent-dim:   rgba(0,200,150,0.10);
+            --text:         #dde6f0;
+            --text-muted:   #7a8fa8;
+            --text-dim:     #3d4f63;
+            --mono:         'JetBrains Mono', monospace;
+            --sans:         'Sora', sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 16px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,200,150,0.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,200,150,0.018) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── NAV ─── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5rem;
+            height: 64px;
+            background: rgba(7,10,15,0.9);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-logo {
+            font-family: var(--mono);
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .nav-back {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .nav-back:hover { color: var(--accent); }
+        .nav-back::before { content: '←'; font-size: 1rem; }
+
+        /* ─── HERO ─── */
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 8rem 5rem 0;
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 3px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .tag-course {
+            background: rgba(0,200,150,0.1);
+            border: 1px solid rgba(0,200,150,0.25);
+            color: var(--accent);
+        }
+
+        .tag-award {
+            background: rgba(250,199,117,0.1);
+            border: 1px solid rgba(250,199,117,0.25);
+            color: #fac775;
+        }
+
+        .tag-status {
+            background: rgba(74,158,255,0.1);
+            border: 1px solid rgba(74,158,255,0.25);
+            color: #4a9eff;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.2rem, 4vw, 3.5rem);
+            font-weight: 600;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero-desc {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            max-width: 680px;
+            line-height: 1.85;
+            margin-bottom: 2rem;
+        }
+
+        .hero-links {
+            display: flex;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+            margin-bottom: 3.5rem;
+        }
+
+        .btn {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            padding: 0.65rem 1.4rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s, transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary { background: var(--accent); color: #050710; border: none; }
+        .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-hover);
+        }
+        .btn-outline:hover { color: var(--text); border-color: var(--text-muted); transform: translateY(-1px); }
+
+        /* ─── HERO IMAGE ─── */
+        .hero-img-wrap {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1140px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .hero-img-wrap img {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            object-position: center 30%;
+            display: block;
+        }
+
+        .hero-img-caption {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            letter-spacing: 0.06em;
+            padding: 0.6rem 5rem;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ─── MAIN CONTENT ─── */
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 5rem;
+        }
+
+        /* ─── SECTION ─── */
+        .section {
+            padding: 4rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section:last-child { border-bottom: none; }
+
+        .section-label {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 1.75rem;
+        }
+
+        /* ─── OVERVIEW GRID ─── */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 4rem;
+            align-items: start;
+        }
+
+        .overview-text p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .spec-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid var(--border);
+            gap: 1rem;
+        }
+
+        .spec-row:first-child { border-top: 1px solid var(--border); }
+
+        .spec-key {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .spec-val {
+            font-size: 0.875rem;
+            color: var(--text);
+            text-align: right;
+        }
+
+        /* ─── ROLE ─── */
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .role-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            transition: border-color 0.2s;
+        }
+
+        .role-card:hover { border-color: var(--border-hover); }
+
+        .role-card-icon {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
+        }
+
+        .role-card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .role-card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.65;
+        }
+
+        /* ─── IMAGE GALLERY ─── */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .gallery-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+            cursor: pointer;
+        }
+
+        .gallery-item:hover { border-color: var(--border-hover); }
+
+        .gallery-item.wide { grid-column: span 2; }
+
+        .gallery-item img {
+            width: 100%;
+            display: block;
+            background: #0a0f18;
+        }
+
+        .gallery-item.dark-bg img { background: #fff; }
+
+        .gallery-caption {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            padding: 0.7rem 1rem;
+            border-top: 1px solid var(--border);
+            text-transform: uppercase;
+        }
+
+        /* ─── CHALLENGE ─── */
+        .challenge-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1.75rem 2rem;
+        }
+
+        .challenge-label {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--accent);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .challenge-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .challenge-body {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .challenge-body p { margin-bottom: 0.75rem; }
+        .challenge-body p:last-child { margin-bottom: 0; }
+
+        .inline-tag {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            padding: 0.15rem 0.45rem;
+            background: rgba(0,200,150,0.08);
+            border: 1px solid rgba(0,200,150,0.2);
+            border-radius: 3px;
+            color: var(--accent);
+        }
+
+        /* ─── DEMOS ─── */
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .demo-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem 1.4rem;
+            text-decoration: none;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .demo-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+        .demo-icon {
+            font-size: 1.3rem;
+            margin-top: 0.1rem;
+            flex-shrink: 0;
+        }
+
+        .demo-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .demo-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .demo-link-label {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        /* ─── TECH STACK ─── */
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .tech-tag {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            background: rgba(0,200,150,0.06);
+            border: 1px solid rgba(0,200,150,0.18);
+            border-radius: 3px;
+            color: var(--text);
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.75rem 5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 100%;
+        }
+
+        .footer-brand {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .footer-nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-nav a {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-nav a:hover { color: var(--accent); }
+
+        /* ─── LIGHTBOX ─── */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(7,10,15,0.95);
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            cursor: zoom-out;
+        }
+
+        .lightbox.open { display: flex; }
+
+        .lightbox img {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 2rem;
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* ─── ANIMATIONS ─── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-1 { opacity: 0; animation: fadeUp 0.5s 0.05s ease forwards; }
+        .fade-2 { opacity: 0; animation: fadeUp 0.5s 0.15s ease forwards; }
+        .fade-3 { opacity: 0; animation: fadeUp 0.5s 0.25s ease forwards; }
+        .fade-4 { opacity: 0; animation: fadeUp 0.5s 0.35s ease forwards; }
+        .fade-5 { opacity: 0; animation: fadeUp 0.5s 0.45s ease forwards; }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <a href="../../index.html" class="nav-logo">&lt;leo /&gt;</a>
+    <a href="../../index.html#projects" class="nav-back">All Projects</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-meta fade-1">
+        <span class="tag tag-course">MEAM 5100</span>
+        <span class="tag tag-award">🏆 3rd Place</span>
+        <span class="tag tag-status">Team of 3</span>
+    </div>
+    <h1 class="fade-2">RoboCart Autonomous Vehicle</h1>
+    <p class="hero-desc fade-3">
+        A fully autonomous combat-ready robot built from scratch — custom chassis, complete embedded software stack, Wi-Fi control interface, wall-following navigation, and an I2C-triggered attack arm.
+    </p>
+    <div class="hero-links fade-4">
+        <a href="https://github.com/JiajunLeoTan/RoboCart/" target="_blank" class="btn btn-primary">GitHub Repo</a>
+        <a href="#demos" class="btn btn-outline">View Demos</a>
+        <a href="#gallery" class="btn btn-outline">See Images</a>
+    </div>
+</div>
+
+<!-- HERO IMAGE -->
+<div class="hero-img-wrap fade-5">
+    <img src="final.png" alt="RoboCart final assembled robot with glowing LED ring and extended attack arm">
+</div>
+<div class="hero-img-caption">Final assembled RoboCart — LED ring, attack arm, and full sensor suite</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="section reveal">
+        <div class="section-label">Overview</div>
+        <div class="section-title">Project Summary</div>
+        <div class="overview-grid">
+            <div class="overview-text">
+                <p>RoboCart is an autonomous wheeled robot designed for a class-wide competition. The robot navigates using ultrasonic distance sensors and HTC Vive positioning sensors, follows walls autonomously, and deploys a servo-driven attack arm triggered via I2C whisker switch input — all coordinated by an ESP32-S2 microcontroller.</p>
+                <p>The robot operates in two modes: a web-based manual control interface served directly from the ESP32 over SoftAP Wi-Fi, and a fully autonomous mode combining wall-following logic with attack sequencing. Every subsystem — firmware, control logic, electronics, and chassis — was designed and built by a three-person team.</p>
+            </div>
+            <div class="spec-list">
+                <div class="spec-row">
+                    <span class="spec-key">Course</span>
+                    <span class="spec-val">MEAM 5100 — Mechatronics</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-key">Team</span>
+                    <span class="spec-val">3 members</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-key">Result</span>
+                    <span class="spec-val">3rd place, class competition</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-key">MCU</span>
+                    <span class="spec-val">ESP32-S2</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-key">Power</span>
+                    <span class="spec-val">9V battery + 5V / 3.3V rails</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-key">Comms</span>
+                    <span class="spec-val">SoftAP Wi-Fi + I2C</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-key">CAD</span>
+                    <span class="spec-val">SolidWorks — 19-part BOM</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MY ROLE -->
+    <div class="section reveal">
+        <div class="section-label">Contributions</div>
+        <div class="section-title">What I Built</div>
+        <div class="role-grid">
+            <div class="role-card">
+                <div class="role-card-icon">// firmware</div>
+                <div class="role-card-title">Motor &amp; Sensor Control</div>
+                <div class="role-card-desc">Wrote all embedded C++ firmware for the Parallax servo motors and HC-SR04 ultrasonic sensors, including interrupt-driven echo timing and PWM output calibration.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// autonomy</div>
+                <div class="role-card-title">Wall-Following &amp; Attack Logic</div>
+                <div class="role-card-desc">Implemented the wall-following algorithm using dual ultrasonic readings and the autonomous attack sequencer that triggers when the whisker switch fires via I2C.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// comms</div>
+                <div class="role-card-title">Wi-Fi Control Website</div>
+                <div class="role-card-desc">Built the SoftAP-hosted web interface for real-time manual control — the ESP32 serves the page directly, no external server required. Handled all Wi-Fi packet routing.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// integration</div>
+                <div class="role-card-title">I2C Bus Integration</div>
+                <div class="role-card-desc">Wired and programmed the I2C bus connecting the tophat whisker switch to the ESP32-S2, coordinating sensor events with attack arm actuation in real time.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// mechanical</div>
+                <div class="role-card-title">Sensor Mounts &amp; Stress Analysis</div>
+                <div class="role-card-desc">Designed sensor mounting brackets and clearance studies in SolidWorks. Ran COMSOL structural stress analysis on the integrated chassis to validate load-bearing design.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// debugging</div>
+                <div class="role-card-title">End-to-End System Debug</div>
+                <div class="role-card-desc">Root-caused the recurring ultrasonic sensor failure — identified datasheet power-sequencing violation, replaced SEN0001 units with HC-SR04s, and enforced GND-first grounding protocol.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GALLERY -->
+    <div class="section reveal" id="gallery">
+        <div class="section-label">Documentation</div>
+        <div class="section-title">Images &amp; Diagrams</div>
+        <div class="gallery-grid">
+            <div class="gallery-item" onclick="openLightbox('cad.png', 'SolidWorks final assembly drawing — 19-part BOM')">
+                <img src="cad.png" alt="SolidWorks CAD final assembly drawing">
+                <div class="gallery-caption">SolidWorks — Final assembly drawing (19-part BOM)</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('system.png', 'MCU block diagram — full system architecture')">
+                <img src="system.png" alt="System block diagram" style="background:#fff; padding: 1rem;">
+                <div class="gallery-caption">MCU block diagram — system architecture</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('base.png', 'Annotated photos — mobile base isometric and front views')">
+                <img src="base.png" alt="Annotated mobile base photos">
+                <div class="gallery-caption">Annotated mobile base — isometric &amp; front view</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('circuit.png', 'Complete circuit schematic — ESP32-S2, ultrasonic sensors, Vive sensors, servo motors')">
+                <img src="circuit.png" alt="Complete circuit schematic">
+                <div class="gallery-caption">Complete circuit schematic</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHALLENGE -->
+    <div class="section reveal">
+        <div class="section-label">Engineering Challenge</div>
+        <div class="section-title">Debugging the Ultrasonic Failures</div>
+        <div class="challenge-card">
+            <div class="challenge-label">Root Cause Analysis</div>
+            <div class="challenge-title">Four sensors destroyed — and why it kept happening</div>
+            <div class="challenge-body">
+                <p>During development, we damaged four <span class="inline-tag">SEN0001</span> ultrasonic sensors in sequence. The motors, Vive sensors, ESP32-S2, servo motors, and buttons all remained stable — the failures were isolated to the ultrasonic sensors, which are known to be sensitive to power conditions.</p>
+                <p>After investigating the <span class="inline-tag">HC-SR04</span> datasheet, we identified the root cause: the datasheet explicitly states that no pins (Vcc, Trig, or Echo) should be connected to a power source unless the GND terminal is already connected. During testing of the wall-following code, this requirement had not been consistently followed, causing the sensors to overheat and become permanently damaged.</p>
+                <p>The fix was to replace the SEN0001 units with HC-SR04 sensors and enforce strict GND-first grounding practices across all connections. After the change, no further sensor failures occurred for the remainder of the project — confirming the hypothesis and reinforcing the importance of reading datasheets before touching hardware.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEMOS -->
+    <div class="section reveal" id="demos">
+        <div class="section-label">Demos</div>
+        <div class="section-title">Video Demonstrations</div>
+        <div class="demo-grid">
+            <a href="https://drive.google.com/file/d/1_7k6-uPXvLSCHRnMKhtMzmliYHsjZ4aC/view?usp=drive_link" target="_blank" class="demo-card">
+                <div class="demo-icon">▶</div>
+                <div>
+                    <div class="demo-title">Wall Following (2× speed)</div>
+                    <div class="demo-desc">Autonomous navigation mode — robot maintains a fixed distance from the wall using dual ultrasonic sensors.</div>
+                    <div class="demo-link-label">Open on Google Drive ↗</div>
+                </div>
+            </a>
+            <a href="https://drive.google.com/file/d/1jM6azDNgfFrko7TNXruf_ugLSo4cZFAu/view?usp=drive_link" target="_blank" class="demo-card">
+                <div class="demo-icon">▶</div>
+                <div>
+                    <div class="demo-title">Manual Control + Attack Arm</div>
+                    <div class="demo-desc">Web-interface-driven manual control with the servo-powered attack arm swinging continuously.</div>
+                    <div class="demo-link-label">Open on Google Drive ↗</div>
+                </div>
+            </a>
+            <a href="https://drive.google.com/file/d/1MWYbW9Ym6bJ0VkikERjq15HwSFuo1Avh/view?usp=drive_link" target="_blank" class="demo-card">
+                <div class="demo-icon">▶</div>
+                <div>
+                    <div class="demo-title">Attack Arm Triggering Whisker</div>
+                    <div class="demo-desc">Attack arm contacts the tophat whisker switch, demonstrating the physical trigger mechanism.</div>
+                    <div class="demo-link-label">Open on Google Drive ↗</div>
+                </div>
+            </a>
+            <a href="https://drive.google.com/file/d/1LcyDkzkNVhQtBPHughNXHcrC8Sxh2L1j/view?usp=drive_link" target="_blank" class="demo-card">
+                <div class="demo-icon">▶</div>
+                <div>
+                    <div class="demo-title">I2C + Wi-Fi Packet Capture</div>
+                    <div class="demo-desc">Whisker switch triggers I2C event; oscilloscope confirms signal integrity while Wi-Fi packets are transmitted.</div>
+                    <div class="demo-link-label">Open on Google Drive ↗</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- TECH STACK -->
+    <div class="section reveal">
+        <div class="section-label">Stack</div>
+        <div class="section-title">Technologies Used</div>
+        <div class="tech-tags">
+            <span class="tech-tag">ESP32-S2</span>
+            <span class="tech-tag">C++ / Arduino</span>
+            <span class="tech-tag">SolidWorks</span>
+            <span class="tech-tag">COMSOL</span>
+            <span class="tech-tag">HC-SR04 Ultrasonic</span>
+            <span class="tech-tag">HTC Vive Sensors</span>
+            <span class="tech-tag">Parallax Servo Motors</span>
+            <span class="tech-tag">I2C</span>
+            <span class="tech-tag">SoftAP Wi-Fi</span>
+            <span class="tech-tag">PWM Control</span>
+            <span class="tech-tag">FEA (Structural)</span>
+            <span class="tech-tag">HTML / JS (Control UI)</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-brand">&lt;leo /&gt; &middot; RoboCart</div>
+    <div class="footer-nav">
+        <a href="mailto:jiajun.leo.tan@gmail.com">email</a>
+        <a href="https://www.linkedin.com/in/leo-tan-370ba2166/" target="_blank">linkedin</a>
+        <a href="https://github.com/JiajunLeoTan" target="_blank">github</a>
+        <a href="../../index.html#projects">all projects</a>
+    </div>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <div class="lightbox-close">ESC to close</div>
+    <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+    function openLightbox(src, alt) {
+        const lb = document.getElementById('lightbox');
+        document.getElementById('lightbox-img').src = src;
+        document.getElementById('lightbox-img').alt = alt;
+        lb.classList.add('open');
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

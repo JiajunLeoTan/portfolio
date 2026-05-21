@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Airfoil Failure Analysis — Leo Tan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:           #070a0f;
+            --bg-surface:   #0d1117;
+            --bg-card:      #0f1720;
+            --border:       #1a2333;
+            --border-hover: #2a3a50;
+            --accent:       #00c896;
+            --accent-red:   #e05c5c;
+            --accent-dim:   rgba(0,200,150,0.10);
+            --text:         #dde6f0;
+            --text-muted:   #7a8fa8;
+            --text-dim:     #3d4f63;
+            --mono:         'JetBrains Mono', monospace;
+            --sans:         'Sora', sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 16px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,200,150,0.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,200,150,0.018) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── NAV ─── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5rem;
+            height: 64px;
+            background: rgba(7,10,15,0.9);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-logo { font-family: var(--mono); font-size: 1.05rem; font-weight: 700; color: var(--accent); text-decoration: none; }
+        .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+        .nav-back:hover { color: var(--accent); }
+        .nav-back::before { content: '←'; font-size: 1rem; }
+
+        /* ─── HERO ─── */
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 8rem 5rem 0;
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        .hero-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.5s 0.05s ease forwards; }
+
+        .tag { font-family: var(--mono); font-size: 0.68rem; padding: 0.25rem 0.65rem; border-radius: 3px; letter-spacing: 0.08em; text-transform: uppercase; }
+        .tag-course  { background: rgba(0,200,150,0.10); border: 1px solid rgba(0,200,150,0.25); color: var(--accent); }
+        .tag-tool    { background: rgba(74,158,255,0.10); border: 1px solid rgba(74,158,255,0.25); color: #4a9eff; }
+        .tag-team    { background: rgba(255,200,80,0.08); border: 1px solid rgba(255,200,80,0.20); color: #fac775; }
+
+        .hero h1 { font-size: clamp(2rem, 3.5vw, 3.2rem); font-weight: 600; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 1.25rem; opacity: 0; animation: fadeUp 0.5s 0.15s ease forwards; }
+
+        .hero-desc { font-size: 1.05rem; color: var(--text-muted); max-width: 700px; line-height: 1.85; margin-bottom: 2rem; opacity: 0; animation: fadeUp 0.5s 0.25s ease forwards; }
+
+        .hero-links { display: flex; gap: 0.85rem; flex-wrap: wrap; margin-bottom: 3.5rem; opacity: 0; animation: fadeUp 0.5s 0.35s ease forwards; }
+
+        .btn { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; padding: 0.65rem 1.4rem; border-radius: 4px; cursor: pointer; text-decoration: none; transition: opacity 0.2s, transform 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-primary { background: var(--accent); color: #050710; border: none; }
+        .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+        .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border-hover); }
+        .btn-outline:hover { color: var(--text); border-color: var(--text-muted); transform: translateY(-1px); }
+
+        /* ─── HERO VISUAL (mesh plot) ─── */
+        .hero-img-wrap { position: relative; z-index: 1; width: 100%; max-width: 1140px; margin: 0 auto; overflow: hidden; opacity: 0; animation: fadeUp 0.5s 0.45s ease forwards; }
+        .hero-img-wrap img { width: 100%; max-height: 420px; object-fit: cover; object-position: center; display: block; background: #fff; }
+        .hero-img-caption { font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.06em; padding: 0.6rem 5rem; background: var(--bg-surface); border-bottom: 1px solid var(--border); }
+
+        /* ─── SHARED SECTION ─── */
+        .content { position: relative; z-index: 1; max-width: 1140px; margin: 0 auto; padding: 0 5rem; }
+        .section { padding: 4rem 0; border-bottom: 1px solid var(--border); }
+        .section:last-child { border-bottom: none; }
+        .section-label { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.4rem; }
+        .section-title { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 1.75rem; }
+
+        /* ─── OVERVIEW ─── */
+        .overview-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 4rem; align-items: start; }
+        .overview-text p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 0.9rem; line-height: 1.8; }
+        .spec-list { display: flex; flex-direction: column; gap: 0; }
+        .spec-row { display: flex; justify-content: space-between; align-items: baseline; padding: 0.65rem 0; border-bottom: 1px solid var(--border); gap: 1rem; }
+        .spec-row:first-child { border-top: 1px solid var(--border); }
+        .spec-key { font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; flex-shrink: 0; }
+        .spec-val { font-size: 0.875rem; color: var(--text); text-align: right; }
+        .spec-val code { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
+
+        /* ─── ROLE CARDS ─── */
+        .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .role-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; transition: border-color 0.2s; }
+        .role-card:hover { border-color: var(--border-hover); }
+        .role-card-icon { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.6rem; }
+        .role-card-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+        .role-card-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.65; }
+
+        /* ─── METHODOLOGY STEPS ─── */
+        .method-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .method-step { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.4rem; transition: border-color 0.2s; }
+        .method-step:hover { border-color: var(--border-hover); }
+        .method-step-num { font-family: var(--mono); font-size: 0.68rem; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .method-step-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+        .method-step-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.65; }
+
+        /* ─── GALLERY ─── */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .gallery-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; cursor: pointer; }
+        .gallery-item:hover { border-color: var(--border-hover); }
+        .gallery-item.wide { grid-column: span 2; }
+        .gallery-item img { width: 100%; display: block; background: #fff; }
+        .gallery-caption { font-family: var(--mono); font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.06em; padding: 0.7rem 1rem; border-top: 1px solid var(--border); text-transform: uppercase; }
+
+        /* ─── KEY RESULT CALLOUTS ─── */
+        .result-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem; margin-bottom: 2rem; }
+        .result-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem; }
+        .result-number { font-family: var(--mono); font-size: 1.6rem; font-weight: 700; color: var(--accent); line-height: 1; margin-bottom: 0.3rem; }
+        .result-label { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
+        .result-sub { font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); margin-top: 0.25rem; }
+
+        /* ─── FINDING CARD ─── */
+        .finding-card { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--accent-red); border-radius: 0 8px 8px 0; padding: 1.75rem 2rem; margin-bottom: 1rem; }
+        .finding-label { font-family: var(--mono); font-size: 0.68rem; color: var(--accent-red); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .finding-title { font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: 1rem; }
+        .finding-body { font-size: 0.9rem; color: var(--text-muted); line-height: 1.8; }
+        .finding-body p { margin-bottom: 0.75rem; }
+        .finding-body p:last-child { margin-bottom: 0; }
+
+        .inline-tag { font-family: var(--mono); font-size: 0.72rem; padding: 0.15rem 0.45rem; background: rgba(0,200,150,0.08); border: 1px solid rgba(0,200,150,0.2); border-radius: 3px; color: var(--accent); }
+        .inline-tag-red { font-family: var(--mono); font-size: 0.72rem; padding: 0.15rem 0.45rem; background: rgba(224,92,92,0.08); border: 1px solid rgba(224,92,92,0.2); border-radius: 3px; color: var(--accent-red); }
+
+        /* ─── TECH TAGS ─── */
+        .tech-tags { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+        .tech-tag { font-family: var(--mono); font-size: 0.75rem; padding: 0.35rem 0.75rem; background: rgba(0,200,150,0.06); border: 1px solid rgba(0,200,150,0.18); border-radius: 3px; color: var(--text); }
+
+        /* ─── FOOTER ─── */
+        footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 1.75rem 5rem; display: flex; align-items: center; justify-content: space-between; }
+        .footer-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--text-dim); }
+        .footer-nav { display: flex; gap: 1.5rem; }
+        .footer-nav a { font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+        .footer-nav a:hover { color: var(--accent); }
+
+        /* ─── LIGHTBOX ─── */
+        .lightbox { display: none; position: fixed; inset: 0; z-index: 999; background: rgba(7,10,15,0.96); align-items: center; justify-content: center; padding: 2rem; cursor: zoom-out; }
+        .lightbox.open { display: flex; }
+        .lightbox img { max-width: 92vw; max-height: 92vh; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+        .lightbox-close { position: absolute; top: 1.5rem; right: 2rem; font-family: var(--mono); font-size: 0.8rem; color: var(--text-muted); cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; }
+
+        /* ─── ANIMATIONS ─── */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        .reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="../../index.html" class="nav-logo">&lt;leo /&gt;</a>
+    <a href="../../index.html#projects" class="nav-back">All Projects</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-meta">
+        <span class="tag tag-course">MEAM 5270</span>
+        <span class="tag tag-tool">COMSOL k-&omega; SST</span>
+        <span class="tag tag-team">Team of 3</span>
+    </div>
+    <h1>F1 Airfoil Failure Analysis:<br>1969 Lotus 49B</h1>
+    <p class="hero-desc">
+        A CFD and FEA investigation into the catastrophic rear wing structural failures at the 1969 Spanish Grand Prix — reconstructing the aerodynamic loads that broke Graham Hill's Lotus 49B, using a COMSOL k-&omega; SST model of the NACA 0012 airfoil swept across a full operating envelope.
+    </p>
+    <div class="hero-links">
+        <a href="report.pdf" target="_blank" class="btn btn-primary">Full Report (PDF)</a>
+        <a href="#findings" class="btn btn-outline">Key Findings</a>
+        <a href="#gallery" class="btn btn-outline">Plots &amp; Diagrams</a>
+    </div>
+</div>
+
+<div class="hero-img-wrap">
+    <img src="mesh.png" alt="COMSOL mesh — C-shaped domain with refined elements around NACA 0012 airfoil">
+</div>
+<div class="hero-img-caption">COMSOL mesh — C-shaped domain with local refinement around the NACA 0012 airfoil</div>
+
+<div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="section reveal">
+        <div class="section-label">Overview</div>
+        <div class="section-title">Project Summary</div>
+        <div class="overview-grid">
+            <div class="overview-text">
+                <p>On May 4, 1969, Graham Hill's Lotus 49B suffered a catastrophic rear wing collapse during the Spanish Grand Prix at Montjuic Park — the supporting strut failed under extreme aerodynamic load, sending Hill into the barriers. Similar failures occurred across multiple teams that season, prompting an immediate ban on high-mounted wings before the Monaco Grand Prix two weeks later.</p>
+                <p>This study reconstructs the loading conditions that caused these failures using 2D CFD in COMSOL Multiphysics. A NACA 0012 airfoil profile (the most likely candidate for the Lotus 49B, whose exact profile was never published) was modeled in a C-shaped domain with a k-&omega; SST turbulence model, swept across angles of attack from &minus;20&deg; to +20&deg; at race-representative conditions (90 m/s, Re&nbsp;=&nbsp;6.125&times;10&sup6;). The resulting forces were applied to a simplified single-strut FBD using known 2024 aluminum strut dimensions.</p>
+                <p>Validation against published NACA 0012 data confirmed stall at 16&deg; and linear-region agreement, establishing confidence in the structural loading calculations.</p>
+            </div>
+            <div class="spec-list">
+                <div class="spec-row"><span class="spec-key">Course</span><span class="spec-val">MEAM 5270 — Mechanics of Solids</span></div>
+                <div class="spec-row"><span class="spec-key">Team</span><span class="spec-val">Jason Chen, Solomon Gonzalez, Leo Tan</span></div>
+                <div class="spec-row"><span class="spec-key">Airfoil</span><span class="spec-val">NACA 0012</span></div>
+                <div class="spec-row"><span class="spec-key">Turbulence model</span><span class="spec-val"><code>k-&omega; SST</code></span></div>
+                <div class="spec-row"><span class="spec-key">Freestream velocity</span><span class="spec-val">90 m/s (~324 km/h)</span></div>
+                <div class="spec-row"><span class="spec-key">Reynolds number</span><span class="spec-val">6.125 &times; 10&sup6;</span></div>
+                <div class="spec-row"><span class="spec-key">AoA sweep</span><span class="spec-val">&minus;20&deg; to +20&deg;, 1&deg; increments</span></div>
+                <div class="spec-row"><span class="spec-key">Mesh levels</span><span class="spec-val">5 (3,887 &rarr; 669,398 elements)</span></div>
+                <div class="spec-row"><span class="spec-key">Strut material</span><span class="spec-val">2024 aluminum (E=70 GPa, &sigma;_y=324 MPa)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MY ROLE -->
+    <div class="section reveal">
+        <div class="section-label">Contributions</div>
+        <div class="section-title">What I Built</div>
+        <div class="role-grid">
+            <div class="role-card">
+                <div class="role-card-icon">// CFD setup</div>
+                <div class="role-card-title">Boundary Conditions &amp; Domain</div>
+                <div class="role-card-desc">Set up the full COMSOL boundary condition configuration: no-slip on the airfoil surface, inflow velocity at left/top edges (90 m/s), outflow at right boundary, and moving-ground no-slip at the bottom to simulate realistic ground-effect interactions under the F1 car.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// parametric study</div>
+                <div class="role-card-title">AoA Variable Sweep</div>
+                <div class="role-card-desc">Designed and ran the full angle-of-attack sweep from &minus;20&deg; to +20&deg; in 1&deg; increments using COMSOL's parametric solver — 41 individual simulations with convergence criteria of 1e-6 and a maximum of 300 iterations each.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// structural</div>
+                <div class="role-card-title">Failure Mode Analysis</div>
+                <div class="role-card-desc">Performed the FEA stress-driven failure study on the wing-and-strut assembly — built the FBD, derived the moment at the beam support using M_beam = M_CG + 1.2·F_D, and checked both buckling and bending failure modes against 2024 aluminum material properties.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// validation</div>
+                <div class="role-card-title">NACA 0012 Validation</div>
+                <div class="role-card-desc">Validated the simulation against NACA airfoil database data at Re = 1,000,000 (lowered inflow to 15 m/s for matching). Confirmed stall angle at 16&deg;, near-zero lift at 0&deg;, and symmetric negative-AoA behavior — all matching published experimental results.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// mesh study</div>
+                <div class="role-card-title">Mesh Convergence Study</div>
+                <div class="role-card-desc">Supported the 5-level mesh convergence study using a local refinement bounding box (4m&times;2m) around the airfoil. Analyzed relative errors in C_L and C_D vs. mesh 4 reference, justifying mesh #1 (11,720 elements) as the optimal balance for the full parameter sweep.</div>
+            </div>
+            <div class="role-card">
+                <div class="role-card-icon">// analysis</div>
+                <div class="role-card-title">Ground-Effect Analysis</div>
+                <div class="role-card-desc">Analyzed the near-ground configuration separately from freestream validation — identified ground-effect distortion in the C_L curve (non-symmetric around &alpha;=0), elevated drag floor, and the sharp moment transition between &alpha;=9&deg; and &alpha;=10&deg; that likely triggered the historical failure.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- METHODOLOGY -->
+    <div class="section reveal">
+        <div class="section-label">Methodology</div>
+        <div class="section-title">Simulation Framework</div>
+        <div class="method-steps">
+            <div class="method-step">
+                <div class="method-step-num">// step 01</div>
+                <div class="method-step-title">C-shaped domain with nested rotation subdomain</div>
+                <div class="method-step-desc">A C-shaped computational domain (10c upstream, 10c vertical, 20c downstream) encapsulates an inner circular subdomain of radius c centered on the NACA 0012 quarter-chord. The airfoil rotates within the circular subdomain without altering inflow boundary conditions — enabling the full AoA sweep with a consistent reference frame.</div>
+            </div>
+            <div class="method-step">
+                <div class="method-step-num">// step 02</div>
+                <div class="method-step-title">k-&omega; SST turbulence model</div>
+                <div class="method-step-desc">Selected for its hybrid near-wall/free-stream behavior: k-&omega; formulation in the viscous sublayer for accurate wall stress, switching to k-&epsilon; in the free stream for stability. Superior prediction of adverse pressure gradients and boundary layer separation makes it particularly well-suited for airfoil stall analysis.</div>
+            </div>
+            <div class="method-step">
+                <div class="method-step-num">// step 03</div>
+                <div class="method-step-title">5-level mesh convergence</div>
+                <div class="method-step-desc">Progressive local refinement in a 4m&times;2m bounding box around the airfoil, from 3,887 elements (mesh 0) to 669,398 (mesh 4). Lift converges much faster than drag — consistent with CFD best practices, as lift is governed by pressure distribution while drag requires finer near-wall resolution. Mesh 1 (11,720 elements) selected for the AoA sweep.</div>
+            </div>
+            <div class="method-step">
+                <div class="method-step-num">// step 04</div>
+                <div class="method-step-title">Structural failure analysis</div>
+                <div class="method-step-desc">Forces from the CFD peak-load case were applied to a simplified single-strut model (L=1.2m, b=0.01m, h=0.07m, 2024 aluminum). Moment at the beam support was calculated as M_beam = M_CG + 1.2·F_D. Both compressive buckling (Euler critical load) and bending failure modes were evaluated against the material yield strength.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KEY RESULTS -->
+    <div class="section reveal" id="findings">
+        <div class="section-label">Results</div>
+        <div class="section-title">Key Findings</div>
+
+        <div class="result-grid">
+            <div class="result-card">
+                <div class="result-number">16&deg;</div>
+                <div class="result-label">Predicted stall angle</div>
+                <div class="result-sub">Matching published NACA data</div>
+            </div>
+            <div class="result-card">
+                <div class="result-number">&minus;3,280 N</div>
+                <div class="result-label">Peak downforce at &alpha;=13&deg;</div>
+                <div class="result-sub">At 90 m/s, Re = 6.125&times;10&sup6;</div>
+            </div>
+            <div class="result-card">
+                <div class="result-number">2,241 Nm/m</div>
+                <div class="result-label">Peak moment at strut base</div>
+                <div class="result-sub">At &alpha;=13&deg; ground-effect config</div>
+            </div>
+            <div class="result-card">
+                <div class="result-number">&alpha; = 9&deg;&rarr;10&deg;</div>
+                <div class="result-label">Critical moment transition</div>
+                <div class="result-sub">Sharp nonlinear jump under ground effect</div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-label">Critical Finding — Failure Mechanism</div>
+            <div class="finding-title">A one-degree AoA deviation could have triggered catastrophic failure</div>
+            <div class="finding-body">
+                <p>The most significant result of this study was the identification of a sharp, nonlinear moment transition between <span class="inline-tag-red">&alpha;=9&deg;</span> and <span class="inline-tag-red">&alpha;=10&deg;</span> under near-ground conditions. In the ground-effect configuration at 90 m/s, the moment at the strut base increases dramatically over this one-degree range — far exceeding the smooth behavior predicted by classical NACA wind tunnel data.</p>
+                <p>It is likely that the Lotus 49B was designed to operate near <span class="inline-tag">&alpha;=9&deg;</span>, the point of maximum downforce (C_L peak). However, any small operational deviation — a track bump, a steering input cresting a rise, or an asymmetric load — could shift the wing past that threshold, inducing a large, sudden torque spike that the slender 2024 aluminum struts were never designed to withstand.</p>
+                <p>The ground-effect C_L curve is also non-symmetric around zero, with early stall-like behavior and elevated drag compared to freestream NACA results. This is attributed to boundary layer growth along the ground wall, increased pressure build-up, and early flow separation — effects entirely absent from the wind tunnel data the designers would have used in 1969.</p>
+            </div>
+        </div>
+
+        <div class="finding-card" style="border-left-color: var(--accent);">
+            <div class="finding-label" style="color: var(--accent);">Validation Result</div>
+            <div class="finding-title">Stall angle and linear-region lift confirmed against NACA 0012 database</div>
+            <div class="finding-body">
+                <p>At Re = 1,000,000 (15 m/s inflow), the simulation matched the NACA 0012 database closely in the &minus;5&deg; to +5&deg; range, with nearly identical slopes. The predicted stall angle of <span class="inline-tag">16&deg;</span> matches the published experimental value exactly. Maximum C_L was slightly lower than the reference (1.25 vs. 1.4), attributed to the limitations of steady-state RANS modeling at high angles of attack.</p>
+                <p>Drag coefficients were systematically overestimated (C_D &asymp; 0.04 at 0&deg; vs. published 0.007), consistent with known RANS skin friction over-prediction. However, the relative trends across angles of attack remain valid for structural loading comparisons, and the lift forces — the primary driver of strut bending — were accurately captured.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- GALLERY -->
+    <div class="section reveal" id="gallery">
+        <div class="section-label">Documentation</div>
+        <div class="section-title">Plots &amp; Diagrams</div>
+        <div class="gallery-grid">
+            <div class="gallery-item" onclick="openLightbox('cl-validation.png','CL comparison: COMSOL simulation vs NACA 0012 database at Re=1,000,000')">
+                <img src="cl-validation.png" alt="CL vs AoA — simulation vs NACA database" style="background:#fff; padding: 0.5rem;">
+                <div class="gallery-caption">C_L validation — simulation vs. NACA 0012 database</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('cd-validation.png','CD comparison: COMSOL simulation vs NACA 0012 database at Re=1,000,000')">
+                <img src="cd-validation.png" alt="CD vs AoA — simulation vs NACA database" style="background:#fff; padding: 0.5rem;">
+                <div class="gallery-caption">C_D validation — simulation vs. NACA 0012 database</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('lift.png','Lift force vs angle of attack — peak F_l = -3280N at alpha=13°')">
+                <img src="lift.png" alt="Lift force vs alpha" style="background:#fff; padding: 0.5rem;">
+                <div class="gallery-caption">Lift force vs. AoA — peak &minus;3,280 N at &alpha;=13&deg;</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('drag.png','Drag force vs angle of attack — F_d = 543N at alpha=13°')">
+                <img src="drag.png" alt="Drag force vs alpha" style="background:#fff; padding: 0.5rem;">
+                <div class="gallery-caption">Drag force vs. AoA — F_d = 543 N at &alpha;=13&deg;</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('moment-support.png','Moment at strut support vs angle of attack — sharp nonlinear jump at alpha=9-10°')">
+                <img src="moment-support.png" alt="Moment at support vs alpha" style="background:#fff; padding: 0.5rem;">
+                <div class="gallery-caption">Moment at strut support vs. AoA — nonlinear jump at &alpha;=9&ndash;10&deg;</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('mesh-convergence.png','Mesh convergence — progressive local refinement from 3,887 to 669,398 elements')">
+                <img src="mesh-convergence.png" alt="Mesh convergence study levels" style="background:#fff; padding: 0.5rem;">
+                <div class="gallery-caption">Mesh convergence — 5-level progressive refinement</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('mesh-table.png','Mesh convergence table — lift and drag coefficients across 5 mesh levels')">
+                <img src="mesh-table.png" alt="Mesh convergence table" style="background:#fff; padding: 0.75rem;">
+                <div class="gallery-caption">Mesh sensitivity table — C_L and C_D vs. element count</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('variables.png','COMSOL global variables — Re, inflow velocity, domain dimensions, fluid properties')">
+                <img src="variables.png" alt="COMSOL global variables" style="background:#fff; padding: 0.75rem;">
+                <div class="gallery-caption">COMSOL global variables — simulation parameters</div>
+            </div>
+            <div class="gallery-item wide" onclick="openLightbox('result-data.png','Full parametric sweep results table — alpha -20° to +20°, all aerodynamic quantities')">
+                <img src="result-data.png" alt="Full results data table" style="background:#fff; padding: 0.75rem; max-height: 280px; object-fit: contain;">
+                <div class="gallery-caption">Full sweep results — &alpha; &minus;20&deg; to +20&deg;, drag, C_d, lift, C_l, moment at support</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TECH STACK -->
+    <div class="section reveal">
+        <div class="section-label">Stack</div>
+        <div class="section-title">Technologies Used</div>
+        <div class="tech-tags">
+            <span class="tech-tag">COMSOL Multiphysics</span>
+            <span class="tech-tag">k-&omega; SST</span>
+            <span class="tech-tag">CFD</span>
+            <span class="tech-tag">FEA</span>
+            <span class="tech-tag">NACA 0012 Profile</span>
+            <span class="tech-tag">Parametric Sweep</span>
+            <span class="tech-tag">Mesh Convergence</span>
+            <span class="tech-tag">Euler Buckling Analysis</span>
+            <span class="tech-tag">Ground Effect Modeling</span>
+            <span class="tech-tag">Force &amp; Moment Integration</span>
+            <span class="tech-tag">2024 Aluminum FBD</span>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <div class="footer-brand">&lt;leo /&gt; &middot; F1 Airfoil Analysis</div>
+    <div class="footer-nav">
+        <a href="mailto:jiajun.leo.tan@gmail.com">email</a>
+        <a href="https://www.linkedin.com/in/leo-tan-370ba2166/" target="_blank">linkedin</a>
+        <a href="https://github.com/JiajunLeoTan" target="_blank">github</a>
+        <a href="../../index.html#projects">all projects</a>
+    </div>
+</footer>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <div class="lightbox-close">ESC to close</div>
+    <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+    function openLightbox(src, alt) {
+        document.getElementById('lightbox-img').src = src;
+        document.getElementById('lightbox-img').alt = alt;
+        document.getElementById('lightbox').classList.add('open');
+    }
+    function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.06 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
