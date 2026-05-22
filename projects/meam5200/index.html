@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEAM 5200 — Pick & Place Challenge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:           #070a0f;
+            --bg-surface:   #0d1117;
+            --bg-card:      #0f1720;
+            --border:       #1a2333;
+            --border-hover: #2a3a50;
+            --accent:       #00c896;
+            --accent-blue:  #4a9eff;
+            --accent-amber: #f0a830;
+            --accent-red:   #ff5c5c;
+            --accent-dim:   rgba(0, 200, 150, 0.10);
+            --text:         #dde6f0;
+            --text-muted:   #7a8fa8;
+            --text-dim:     #3d4f63;
+            --mono:         'JetBrains Mono', monospace;
+            --sans:         'Sora', sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 16px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,200,150,0.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,200,150,0.018) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── NAV ─────────────────────────────────── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            height: 60px;
+            background: rgba(7,10,15,0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .nav-back:hover { color: var(--accent); }
+        .nav-back svg { width: 16px; height: 16px; }
+        .nav-title { font-family: var(--mono); font-size: 12px; color: var(--text-dim); letter-spacing: 0.06em; }
+        .nav-tag {
+            font-family: var(--mono); font-size: 11px; color: var(--accent-amber);
+            background: rgba(240,168,48,0.1); border: 1px solid rgba(240,168,48,0.25);
+            padding: 3px 10px; border-radius: 20px;
+        }
+
+        /* ─── LAYOUT ─────────────────────────────── */
+        .page-wrap { max-width: 1100px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
+
+        /* ─── HERO ───────────────────────────────── */
+        .hero { padding: 120px 0 80px; border-bottom: 1px solid var(--border); }
+        .hero-eyebrow { font-family: var(--mono); font-size: 12px; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 20px; }
+        .hero-title { font-size: clamp(36px, 5vw, 58px); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 24px; }
+        .hero-sub { font-size: 17px; color: var(--text-muted); max-width: 700px; line-height: 1.7; margin-bottom: 40px; }
+        .hero-meta { display: flex; gap: 32px; flex-wrap: wrap; }
+        .meta-item { display: flex; flex-direction: column; gap: 4px; }
+        .meta-label { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+        .meta-val { font-family: var(--mono); font-size: 13px; color: var(--text); }
+        .meta-val.green { color: var(--accent); }
+        .meta-val.amber { color: var(--accent-amber); }
+
+        /* ─── SECTION ────────────────────────────── */
+        .section { padding: 72px 0; border-bottom: 1px solid var(--border); }
+        .section-label { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+        .section-title { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 32px; }
+        .section-body { font-size: 15px; color: var(--text-muted); max-width: 760px; line-height: 1.8; }
+        .section-body p + p { margin-top: 16px; }
+
+        /* ─── SPEC GRID ──────────────────────────── */
+        .spec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 32px; }
+        .spec-row { display: flex; flex-direction: column; gap: 4px; padding: 18px 22px; background: var(--bg-card); }
+        .spec-key { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+        .spec-val { font-family: var(--mono); font-size: 13px; color: var(--text); }
+        .spec-val.green { color: var(--accent); }
+        .spec-val.amber { color: var(--accent-amber); }
+
+        /* ─── VERSION TIMELINE ───────────────────── */
+        .timeline { position: relative; padding-left: 32px; margin-top: 48px; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 6px; top: 8px; bottom: 8px;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent), var(--accent-blue), var(--accent-amber));
+            border-radius: 2px;
+        }
+        .tl-item {
+            position: relative;
+            margin-bottom: 0;
+            padding-bottom: 40px;
+        }
+        .tl-item:last-child { padding-bottom: 0; }
+        .tl-dot {
+            position: absolute;
+            left: -29px;
+            top: 6px;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--bg);
+            background: var(--text-dim);
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .tl-item.active .tl-dot { background: var(--accent); box-shadow: 0 0 0 4px rgba(0,200,150,0.15); }
+        .tl-item.branch .tl-dot { background: var(--accent-blue); }
+        .tl-item.final .tl-dot { background: var(--accent-amber); box-shadow: 0 0 0 4px rgba(240,168,48,0.15); }
+
+        .tl-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 24px;
+            transition: border-color 0.2s;
+        }
+        .tl-card:hover { border-color: var(--border-hover); }
+        .tl-item.active .tl-card { border-color: rgba(0,200,150,0.25); }
+        .tl-item.final .tl-card { border-color: rgba(240,168,48,0.25); }
+
+        .tl-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+        .tl-filename { font-family: var(--mono); font-size: 13px; color: var(--text); font-weight: 500; }
+        .tl-lines { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+        .tl-badge {
+            font-family: var(--mono); font-size: 10px;
+            padding: 2px 8px; border-radius: 10px;
+            border: 1px solid;
+        }
+        .badge-scaffold { color: var(--text-dim); border-color: var(--text-dim); background: rgba(61,79,99,0.15); }
+        .badge-impl { color: var(--accent-blue); border-color: rgba(74,158,255,0.4); background: rgba(74,158,255,0.08); }
+        .badge-branch { color: var(--accent-blue); border-color: rgba(74,158,255,0.4); background: rgba(74,158,255,0.08); }
+        .badge-merge { color: var(--accent); border-color: rgba(0,200,150,0.4); background: rgba(0,200,150,0.08); }
+        .badge-predict { color: #c084fc; border-color: rgba(192,132,252,0.4); background: rgba(192,132,252,0.08); }
+        .badge-competition { color: var(--accent-amber); border-color: rgba(240,168,48,0.4); background: rgba(240,168,48,0.08); }
+
+        .tl-desc { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+        .tl-desc strong { color: var(--text); font-weight: 500; }
+        .tl-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        .tl-tag { font-family: var(--mono); font-size: 10px; color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; background: var(--bg); }
+
+        /* ─── ROLE CARDS ─────────────────────────── */
+        .role-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 32px; }
+        .role-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; transition: border-color 0.2s; }
+        .role-card:hover { border-color: var(--border-hover); }
+        .role-card-icon { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-bottom: 12px; }
+        .role-card-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+        .role-card-desc { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+
+        /* ─── GALLERY ────────────────────────────── */
+        .gallery-grid { display: grid; gap: 12px; }
+        .gallery-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .gallery-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .gallery-item {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .gallery-item:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+        .gallery-item img { width: 100%; height: 280px; object-fit: cover; display: block; }
+        .gallery-item img.contain { object-fit: contain; background: #0a0e16; padding: 16px; }
+        .gallery-caption { padding: 10px 14px 12px; font-family: var(--mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); }
+        .gallery-caption strong { color: var(--text); display: block; margin-bottom: 2px; font-size: 12px; }
+
+        /* ─── VIDEO EMBED ────────────────────────── */
+        .video-wrap {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-top: 32px;
+        }
+        .video-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+
+        /* ─── SCORE CALLOUT ──────────────────────── */
+        .score-card {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            margin-top: 32px;
+        }
+        .score-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .score-number { font-family: var(--mono); font-size: 32px; font-weight: 700; color: var(--accent); line-height: 1; margin-bottom: 8px; }
+        .score-number.amber { color: var(--accent-amber); }
+        .score-label { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+
+        /* ─── CALLOUT ────────────────────────────── */
+        .callout {
+            background: rgba(0, 200, 150, 0.05);
+            border: 1px solid rgba(0,200,150,0.2);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-top: 32px;
+        }
+        .callout-label { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+        .callout-text { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+
+        /* ─── TECH TAGS ──────────────────────────── */
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+        .tag { font-family: var(--mono); font-size: 12px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px; padding: 5px 12px; background: var(--bg-card); transition: border-color 0.2s, color 0.2s; }
+        .tag:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ─── LIGHTBOX ───────────────────────────── */
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; cursor: pointer; }
+        .lightbox.open { display: flex; }
+        .lightbox img { max-width: 92vw; max-height: 88vh; object-fit: contain; border: 1px solid var(--border); border-radius: 6px; }
+        .lb-close { position: fixed; top: 24px; right: 28px; font-family: var(--mono); font-size: 22px; color: var(--text-muted); cursor: pointer; }
+
+        /* ─── SUBSECTION ─────────────────────────── */
+        .sub-title { font-family: var(--mono); font-size: 13px; color: var(--accent-blue); letter-spacing: 0.06em; margin: 40px 0 20px; display: flex; align-items: center; gap: 10px; }
+        .sub-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .sub-title:first-child { margin-top: 0; }
+
+        /* ─── REVEAL ─────────────────────────────── */
+        .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .reveal.visible { opacity: 1; transform: none; }
+
+        /* ─── FOOTER ─────────────────────────────── */
+        .footer { padding: 48px 0; text-align: center; font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+
+        @media (max-width: 700px) {
+            nav { padding: 0 20px; }
+            .page-wrap { padding: 0 20px; }
+            .gallery-grid.cols-2, .gallery-grid.cols-3 { grid-template-columns: 1fr; }
+            .hero { padding: 100px 0 60px; }
+            .timeline { padding-left: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-back" href="../../index.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3L5 8l5 5"/></svg>
+        back to portfolio
+    </a>
+    <span class="nav-title">// robotics & control</span>
+    <span class="nav-tag">4th place · 8,000 pts</span>
+</nav>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lb-close">✕</span>
+    <img id="lb-img" src="" alt="">
+</div>
+
+<div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow reveal">Penn MEAM 5200 · Robotics: Planning & Manipulation</div>
+        <h1 class="hero-title reveal">Pick & Place<br>Challenge</h1>
+        <p class="hero-sub reveal">Autonomous pick-and-place system for the FRANKA EMIKA Panda arm — detecting, picking, and stacking 50 mm wooden cubes from both a static platform and a continuously rotating turntable, under real competition conditions against an opposing robot.</p>
+        <div class="hero-meta reveal">
+            <div class="meta-item">
+                <span class="meta-label">Robot</span>
+                <span class="meta-val">FRANKA EMIKA Panda</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Sim</span>
+                <span class="meta-val">ROS / Gazebo</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Bracket Result</span>
+                <span class="meta-val amber">Top seed → 4th place</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Best Score</span>
+                <span class="meta-val green">8,000 pts</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="section">
+        <div class="section-label reveal">// 01 · overview</div>
+        <div class="section-title reveal">The Challenge</div>
+        <div class="section-body reveal">
+            <p>Two robots compete simultaneously. Each team must pick 50 mm AprilTag-labeled cubes from their own static platform and from a shared rotating turntable, then stack them on their goal platform. Scoring is <code style="color:var(--accent);font-family:var(--mono);font-size:13px">Points = Value × Altitude</code> — a perfectly aligned stack of 8 blocks (4 dynamic on top of 4 static) would yield a theoretical 28,000 points.</p>
+            <p>The core engineering challenge: dynamic blocks move continuously at 0.4 RPM. The robot must predict where a block will be by the time the arm arrives — not where it is when the camera sees it. Our strategy was to guarantee the higher-value dynamic blocks first, then combine the two stacks into a tower of 8.</p>
+        </div>
+        <div class="spec-grid reveal">
+            <div class="spec-row">
+                <span class="spec-key">Robot</span>
+                <span class="spec-val">FRANKA EMIKA Panda (7-DOF)</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Detection</span>
+                <span class="spec-val">AprilTags + RealSense D435</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Turntable Speed</span>
+                <span class="spec-val">0.4 RPM</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Arm Speed</span>
+                <span class="spec-val">0.2 × max (vibration limit)</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Scoring</span>
+                <span class="spec-val">Value × Altitude (mm)</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Dynamic block value</span>
+                <span class="spec-val">20 pts (2× static)</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Sim Success Rate</span>
+                <span class="spec-val green">100% stack alignment</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Competition Result</span>
+                <span class="spec-val amber">4th place, 8,000 pts best</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- VERSION TIMELINE -->
+    <div class="section">
+        <div class="section-label reveal">// 02 · version history</div>
+        <div class="section-title reveal">How the Code Evolved</div>
+        <div class="section-body reveal">
+            <p>The codebase went through 7 distinct stages — from a bare ROS scaffold to a modular competition build. The naming convention tells the story: <code style="color:var(--accent);font-family:var(--mono);font-size:13px">original → combined → new_check → V3 → V4</code>. Each version solved a real problem that the previous one couldn't handle.</p>
+        </div>
+
+        <div class="timeline reveal">
+
+            <div class="tl-item">
+                <div class="tl-dot"></div>
+                <div class="tl-card">
+                    <div class="tl-header">
+                        <span class="tl-filename">original_final.py</span>
+                        <span class="tl-lines">76 lines</span>
+                        <span class="tl-badge badge-scaffold">scaffold</span>
+                    </div>
+                    <div class="tl-desc">Bare competition template — ROS node init, <code style="font-family:var(--mono);font-size:12px">ArmController</code>, <code style="font-family:var(--mono);font-size:12px">ObjectDetector</code>, move to start position, block detection stub. No logic, no functions. The blank canvas.</div>
+                    <div class="tl-tags">
+                        <span class="tl-tag">ROS</span>
+                        <span class="tl-tag">ArmController</span>
+                        <span class="tl-tag">ObjectDetector</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tl-item">
+                <div class="tl-dot"></div>
+                <div class="tl-card">
+                    <div class="tl-header">
+                        <span class="tl-filename">original_final_combined.py</span>
+                        <span class="tl-lines">824 lines</span>
+                        <span class="tl-badge badge-impl">first implementation</span>
+                    </div>
+                    <div class="tl-desc"><strong>First real implementation.</strong> Core logic modularized into functions: <code style="font-family:var(--mono);font-size:12px">detect_static_block_positions</code>, <code style="font-family:var(--mono);font-size:12px">stack_static_blocks</code>, <code style="font-family:var(--mono);font-size:12px">stack_dynamic_blocks</code>, <code style="font-family:var(--mono);font-size:12px">combine_stack</code>. Static block pipeline working end-to-end; dynamic blocks handled with a <code style="font-family:var(--mono);font-size:12px">skip_turntable</code> flag as a placeholder for prediction.</div>
+                    <div class="tl-tags">
+                        <span class="tl-tag">static pipeline</span>
+                        <span class="tl-tag">dynamic pipeline</span>
+                        <span class="tl-tag">modular functions</span>
+                        <span class="tl-tag">combine_stack</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tl-item branch">
+                <div class="tl-dot"></div>
+                <div class="tl-card">
+                    <div class="tl-header">
+                        <span class="tl-filename">final.py &nbsp;/&nbsp; final_Jason.py &nbsp;/&nbsp; finalEric.py</span>
+                        <span class="tl-lines">~640–1067 lines each</span>
+                        <span class="tl-badge badge-branch">personal branches</span>
+                    </div>
+                    <div class="tl-desc"><strong>Parallel development.</strong> Each teammate worked on their own branch. <code style="font-family:var(--mono);font-size:12px">IK_position_null_Leo.py</code> and <code style="font-family:var(--mono);font-size:12px">IK_position_null_Fast.py</code> reflect Leo's IK optimizations. Jason's branch explored dynamic pickup; Eric's branch refined gripper logic. These were never intended to be deployed — they're the experimentation layer.</div>
+                    <div class="tl-tags">
+                        <span class="tl-tag">IK_position_null_Leo</span>
+                        <span class="tl-tag">IK_position_null_Fast</span>
+                        <span class="tl-tag">FK/IK pipeline</span>
+                        <span class="tl-tag">gripper logic</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tl-item active">
+                <div class="tl-dot"></div>
+                <div class="tl-card">
+                    <div class="tl-header">
+                        <span class="tl-filename">final_combined.py</span>
+                        <span class="tl-lines">1,516 lines</span>
+                        <span class="tl-badge badge-merge">first merge</span>
+                    </div>
+                    <div class="tl-desc"><strong>All branches merged.</strong> <code style="font-family:var(--mono);font-size:12px">stack_dynamic_blocks</code> now takes <code style="font-family:var(--mono);font-size:12px">detector</code> as an explicit parameter instead of the <code style="font-family:var(--mono);font-size:12px">skip_turntable</code> flag. <code style="font-family:var(--mono);font-size:12px">check_grab_succeed</code> added as a new failsafe. Gripper close position tuned from 0.04 m to 0.045 m. Team calibration offsets broken out separately for red and blue.</div>
+                    <div class="tl-tags">
+                        <span class="tl-tag">check_grab_succeed</span>
+                        <span class="tl-tag">calibration offsets</span>
+                        <span class="tl-tag">gripper tuning</span>
+                        <span class="tl-tag">detector injection</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tl-item active">
+                <div class="tl-dot"></div>
+                <div class="tl-card">
+                    <div class="tl-header">
+                        <span class="tl-filename">final_combined_new_check.py</span>
+                        <span class="tl-lines">1,561 lines</span>
+                        <span class="tl-badge badge-merge">camera failsafe</span>
+                    </div>
+                    <div class="tl-desc"><strong>Gripper state replaced with vision-based verification.</strong> After each block placement, the arm moves to a position where it can see the top of the stack. If the expected block isn't visible in two consecutive camera frames, it's assumed the pickup failed and the robot attempts that height again. Gripper width feedback was too noisy in hardware; the camera was more reliable.</div>
+                    <div class="tl-tags">
+                        <span class="tl-tag">camera re-detection</span>
+                        <span class="tl-tag">redetect_dynamic_blocks</span>
+                        <span class="tl-tag">vision failsafe</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tl-item active">
+                <div class="tl-dot"></div>
+                <div class="tl-card">
+                    <div class="tl-header">
+                        <span class="tl-filename">final_combined_new_check_V3.py</span>
+                        <span class="tl-lines">1,619 lines</span>
+                        <span class="tl-badge badge-predict">turntable prediction</span>
+                    </div>
+                    <div class="tl-desc"><strong>The key breakthrough.</strong> <code style="font-family:var(--mono);font-size:12px">rotate_block_on_turntable</code> now actually computes a <code style="font-family:var(--mono);font-size:12px">predicted_pose</code>: the block's future position when the arm arrives, not where it was when the camera saw it. Uses t<sub>total</sub> = t<sub>movement</sub> + 5 s calibration offset and a R<sub>z</sub>(θ) rotation about the turntable center. A collision safety threshold was also added — the robot skips pickup if the block's x-axis orientation falls outside a safe window to prevent the gripper impacting the block's side.</div>
+                    <div class="tl-tags">
+                        <span class="tl-tag">predict future pose</span>
+                        <span class="tl-tag">Rz(θ) rotation</span>
+                        <span class="tl-tag">calculate_time_to_reach</span>
+                        <span class="tl-tag">collision threshold</span>
+                        <span class="tl-tag">t_calibration = 5s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tl-item final">
+                <div class="tl-dot"></div>
+                <div class="tl-card">
+                    <div class="tl-header">
+                        <span class="tl-filename">final_combined_new_check_V4.py</span>
+                        <span class="tl-lines">1,066 lines</span>
+                        <span class="tl-badge badge-competition">competition build</span>
+                    </div>
+                    <div class="tl-desc"><strong>Stripped for competition.</strong> <code style="font-family:var(--mono);font-size:12px">combine_stack</code> removed — the timed environment didn't reliably allow the full 8-block procedure. Cleaner execution path, same prediction core. Back to ~1,066 lines but with all the hardware-tested refinements baked in.</div>
+                    <div class="tl-tags">
+                        <span class="tl-tag">competition build</span>
+                        <span class="tl-tag">combine_stack removed</span>
+                        <span class="tl-tag">leaner execution</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- WHAT I BUILT -->
+    <div class="section">
+        <div class="section-label reveal">// 03 · contributions</div>
+        <div class="section-title reveal">What I Built</div>
+        <div class="role-grid">
+            <div class="role-card reveal">
+                <div class="role-card-icon">// kinematics</div>
+                <div class="role-card-title">IK Solver & FK Pipeline</div>
+                <div class="role-card-desc">Developed <code style="font-family:var(--mono);font-size:12px">IK_position_null_Leo.py</code> — a null-space IK solver with joint-centering secondary task to avoid self-collision. The Fast variant reduced IK computation time for time-critical dynamic block targeting.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// prediction</div>
+                <div class="role-card-title">Turntable Pose Prediction</div>
+                <div class="role-card-desc">Contributed to the time-based prediction system: applying R<sub>z</sub>(θ) to propagate detected block pose forward by t_total = t_movement + t_calibration, giving the arm a target that accounts for turntable rotation during transit.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// integration</div>
+                <div class="role-card-title">Cross-Module Integration</div>
+                <div class="role-card-desc">Merged and debugged across all personal branches into the combined builds. Coordinated calibration offset testing between hardware sessions, and helped tune arm speed and gripper parameters for real-robot deployment.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// hardware</div>
+                <div class="role-card-title">Hardware Calibration</div>
+                <div class="role-card-desc">Participated in hardware testing sessions at Towne Lab — iterating on static and dynamic positional offsets, lighting mitigations (paper over reflective acrylic platforms), and detection height tuning (0.5 m static / 0.45 m dynamic).</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="section">
+        <div class="section-label reveal">// 04 · results</div>
+        <div class="section-title reveal">Simulation & Competition</div>
+
+        <div class="score-card reveal">
+            <div class="score-item">
+                <div class="score-number">100%</div>
+                <div class="score-label">Sim stack alignment</div>
+            </div>
+            <div class="score-item">
+                <div class="score-number">3</div>
+                <div class="score-label">Independent sim tests per module</div>
+            </div>
+            <div class="score-item">
+                <div class="score-number amber">8k</div>
+                <div class="score-label">Best competition score (pts)</div>
+            </div>
+            <div class="score-item">
+                <div class="score-number amber">4th</div>
+                <div class="score-label">Final placement</div>
+            </div>
+        </div>
+
+        <div class="callout reveal" style="margin-top:32px">
+            <div class="callout-label">competition post-mortem</div>
+            <div class="callout-text">We entered the playoffs as top seed. Late-round performance degraded for two reasons: (1) camera calibration offsets valid the previous day drifted on competition day due to lighting changes, and (2) an opposing team discovered a sweeping strategy that pushed dynamic blocks to the center of the turntable — outside our fixed viewing cone. A timeout fallback to static-only pickup would have prevented the time loss in the final matches.</div>
+        </div>
+
+        <div class="sub-title reveal">hardware testing — towne lab</div>
+        <div class="gallery-grid cols-2 reveal">
+            <div class="gallery-item" onclick="openLightbox('hw-dynamic-stack.png')">
+                <img src="hw-dynamic-stack.png" alt="4 dynamic blocks stacked in hardware testing">
+                <div class="gallery-caption">
+                    <strong>Hardware Test — Dynamic Stack</strong>
+                    4 dynamic blocks stacked on turntable, Towne Lab
+                </div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('hw-static-stack.png')">
+                <img src="hw-static-stack.png" alt="4 static blocks stacked on red platform">
+                <div class="gallery-caption">
+                    <strong>Hardware Test — Static Stack</strong>
+                    4 static blocks on red goal platform, Towne Lab
+                </div>
+            </div>
+        </div>
+
+        <div class="sub-title reveal">competition day</div>
+        <div class="gallery-grid cols-2 reveal">
+            <div class="gallery-item" onclick="openLightbox('competition-stack.png')">
+                <img src="competition-stack.png" alt="Dynamic stack during 2nd round competition">
+                <div class="gallery-caption">
+                    <strong>Competition — Round 2</strong>
+                    Successful 4-block dynamic stack mid-match
+                </div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('competition-day.png')">
+                <img src="competition-day.png" alt="Two robots competing with turntable">
+                <div class="gallery-caption">
+                    <strong>Competition — Live Match</strong>
+                    Two Panda arms competing for the shared turntable
+                </div>
+            </div>
+        </div>
+
+        <div class="sub-title reveal">simulation setup</div>
+        <div class="gallery-grid reveal" style="grid-template-columns:1fr; max-width:780px">
+            <div class="gallery-item" onclick="openLightbox('sim-setup.png')">
+                <img class="contain" src="sim-setup.png" alt="Annotated Gazebo simulation setup">
+                <div class="gallery-caption">
+                    <strong>Gazebo Simulation Environment</strong>
+                    Annotated arena — static platforms, turntable, goal platforms, and key coordinates
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIDEO -->
+    <div class="section">
+        <div class="section-label reveal">// 05 · demo</div>
+        <div class="section-title reveal">Competition Video</div>
+        <div class="section-body reveal">Full competition run from Round 2 — 4-block dynamic stack successfully completed.</div>
+        <div class="video-wrap reveal">
+            <iframe src="https://www.youtube.com/embed/3RuP0F9hb4g" title="MEAM 5200 Competition" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <!-- TECH STACK -->
+    <div class="section">
+        <div class="section-label reveal">// 06 · tools & methods</div>
+        <div class="section-title reveal">Tech Stack</div>
+        <div class="tag-list reveal">
+            <span class="tag">Python</span>
+            <span class="tag">ROS (Noetic)</span>
+            <span class="tag">Gazebo</span>
+            <span class="tag">FRANKA EMIKA Panda</span>
+            <span class="tag">Forward Kinematics</span>
+            <span class="tag">Inverse Kinematics</span>
+            <span class="tag">Null-Space IK</span>
+            <span class="tag">AprilTag Detection</span>
+            <span class="tag">Intel RealSense D435</span>
+            <span class="tag">Pose Prediction</span>
+            <span class="tag">Rz(θ) Rotation</span>
+            <span class="tag">Waypoint Planning</span>
+            <span class="tag">Gripper Control</span>
+            <span class="tag">Camera Calibration</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        &lt;— <a href="../../index.html" style="color:var(--accent);text-decoration:none;">back to portfolio</a>
+    </div>
+
+</div>
+
+<script>
+    function openLightbox(src) {
+        document.getElementById('lb-img').src = src;
+        document.getElementById('lightbox').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach((el, i) => {
+        el.style.transitionDelay = `${(i % 4) * 60}ms`;
+        observer.observe(el);
+    });
+</script>
+</body>
+</html>
