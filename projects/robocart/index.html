@@ -543,6 +543,197 @@
             text-transform: uppercase;
         }
 
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 900px) {
+            nav {
+                padding: 0 2rem;
+            }
+
+            .hero {
+                padding: 7rem 2rem 0;
+            }
+
+            .content {
+                padding: 0 2rem;
+            }
+
+            .hero-img-caption {
+                padding: 0.6rem 2rem;
+            }
+
+            .overview-grid {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+
+            .role-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            footer {
+                padding: 1.5rem 2rem;
+            }
+        }
+
+        @media (max-width: 700px) {
+            body {
+                font-size: 15px;
+            }
+
+            nav {
+                height: 58px;
+                padding: 0 1.25rem;
+            }
+
+            .nav-logo {
+                font-size: 0.95rem;
+            }
+
+            .nav-back {
+                min-height: 44px;
+                font-size: 0.68rem;
+                letter-spacing: 0.05em;
+                white-space: nowrap;
+            }
+
+            .hero {
+                padding: 6rem 1.25rem 0;
+            }
+
+            .hero h1 {
+                font-size: clamp(2rem, 11vw, 2.65rem);
+                letter-spacing: -0.5px;
+            }
+
+            .hero-desc {
+                max-width: none;
+                font-size: 0.95rem;
+                line-height: 1.75;
+            }
+
+            .hero-links {
+                gap: 0.7rem;
+                margin-bottom: 2.25rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+                min-height: 44px;
+            }
+
+            .hero-img-wrap img {
+                max-height: 340px;
+                object-fit: contain;
+                background: #0a0f18;
+            }
+
+            .hero-img-caption {
+                padding: 0.65rem 1.25rem;
+                font-size: 0.62rem;
+                line-height: 1.5;
+                letter-spacing: 0.03em;
+            }
+
+            .content {
+                padding: 0 1.25rem;
+            }
+
+            .section {
+                padding: 3rem 0;
+            }
+
+            .section-title {
+                font-size: 1.35rem;
+            }
+
+            .overview-grid,
+            .role-grid,
+            .gallery-grid,
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-item.wide {
+                grid-column: auto;
+            }
+
+            .spec-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .spec-val {
+                text-align: left;
+            }
+
+            .challenge-card {
+                padding: 1.25rem;
+            }
+
+            .demo-card {
+                padding: 1.15rem;
+            }
+
+            footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+                padding: 1.5rem 1.25rem;
+            }
+
+            .footer-nav {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .lightbox {
+                padding: 1rem;
+            }
+
+            .lightbox img {
+                max-width: 94vw;
+                max-height: 84vh;
+            }
+
+            .lightbox-close {
+                top: 1rem;
+                right: 1rem;
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                padding: 0 1rem;
+            }
+
+            .hero,
+            .content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .hero h1 {
+                font-size: clamp(1.9rem, 10vw, 2.35rem);
+            }
+
+            .hero-meta {
+                gap: 0.5rem;
+            }
+
+            .tag {
+                font-size: 0.6rem;
+            }
+
+            .role-card,
+            .challenge-card {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+
         /* ─── ANIMATIONS ─── */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(16px); }

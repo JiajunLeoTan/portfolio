@@ -601,6 +601,236 @@
 
         .footer-links a:hover { color: var(--accent); }
 
+        /* ─── RESPONSIVE ─────────────────────────── */
+        @media (max-width: 900px) {
+            nav {
+                padding: 0 2rem;
+            }
+
+            #hero {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+
+            .section-wrap {
+                padding: 5rem 2rem;
+            }
+
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+
+            .skills-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .proj-panel.active {
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            }
+
+            footer {
+                padding: 1.5rem 2rem;
+            }
+        }
+
+        @media (max-width: 700px) {
+            body {
+                font-size: 15px;
+            }
+
+            nav {
+                height: auto;
+                min-height: 64px;
+                padding: 0.75rem 1.25rem 0.65rem;
+                flex-wrap: wrap;
+                gap: 0.65rem;
+            }
+
+            .nav-logo {
+                font-size: 1rem;
+            }
+
+            .nav-links {
+                order: 2;
+                flex: 0 0 100%;
+                min-width: 0;
+                gap: 1rem;
+                overflow-x: auto;
+                padding-bottom: 0.1rem;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .nav-links::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-links a {
+                display: inline-flex;
+                min-height: 36px;
+                align-items: center;
+                white-space: nowrap;
+                font-size: 0.68rem;
+            }
+
+            #hero {
+                min-height: auto;
+                padding: 8.75rem 1.25rem 4.75rem;
+            }
+
+            .hero-eyebrow {
+                align-items: flex-start;
+                gap: 0.6rem;
+                font-size: 0.68rem;
+                line-height: 1.5;
+            }
+
+            .hero-eyebrow::before {
+                width: 24px;
+                margin-top: 0.75em;
+                flex-shrink: 0;
+            }
+
+            h1 {
+                font-size: clamp(2.35rem, 14vw, 3.2rem);
+                letter-spacing: -1px;
+            }
+
+            .hero-typewriter-wrap {
+                align-items: flex-start;
+                flex-wrap: wrap;
+                font-size: 0.9rem;
+                line-height: 1.5;
+            }
+
+            #typewriter {
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
+            .hero-desc {
+                max-width: none;
+                font-size: 0.95rem;
+                line-height: 1.75;
+            }
+
+            .hero-btns {
+                gap: 0.75rem;
+            }
+
+            .btn-primary,
+            .btn-outline {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+                padding: 0.85rem 1rem;
+            }
+
+            .section-wrap {
+                padding: 4rem 1.25rem;
+            }
+
+            .section-title {
+                font-size: 1.75rem;
+                margin-bottom: 2rem;
+            }
+
+            .about-stats,
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .proj-tabs {
+                overflow-x: auto;
+                margin-left: -1.25rem;
+                margin-right: -1.25rem;
+                padding: 0 1.25rem;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .proj-tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .proj-tab {
+                flex: 0 0 auto;
+                min-height: 44px;
+                padding: 0.8rem 1rem;
+                white-space: nowrap;
+            }
+
+            .proj-panel.active {
+                grid-template-columns: 1fr;
+            }
+
+            .proj-card {
+                padding: 1.25rem;
+            }
+
+            .exp-timeline {
+                padding-left: 1.25rem;
+            }
+
+            .exp-item {
+                padding-left: 1.25rem;
+            }
+
+            .exp-item::before {
+                left: -1.625rem;
+            }
+
+            footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+                padding: 1.5rem 1.25rem;
+            }
+
+            .footer-links {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            #hero {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            h1 {
+                font-size: clamp(2.15rem, 13vw, 2.85rem);
+            }
+
+            .section-wrap {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .proj-tabs {
+                margin-left: -1rem;
+                margin-right: -1rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .stat-card,
+            .skill-group,
+            .proj-card {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+
         /* ─── ANIMATIONS ──────────────────────────── */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(18px); }

@@ -120,7 +120,8 @@
         .scenario-desc { font-size:13px; color:var(--text-muted); line-height:1.6; }
 
         /* RESULTS TABLE */
-        .results-table { width:100%; border-collapse:collapse; margin-top:32px; font-size:14px; }
+        .results-wrap { overflow-x:auto; margin-top:32px; }
+        .results-table { width:100%; border-collapse:collapse; font-size:14px; }
         .results-table th { font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); padding:10px 16px; border-bottom:1px solid var(--border); text-align:left; }
         .results-table td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--text-muted); font-family:var(--mono); font-size:13px; }
         .results-table tr:last-child td { border-bottom:none; }
@@ -163,12 +164,55 @@
         /* FOOTER */
         .footer { padding:48px 0; text-align:center; font-family:var(--mono); font-size:12px; color:var(--text-dim); }
 
+        @media(max-width:900px){
+            nav { padding:0 32px; }
+            .page-wrap { padding:0 32px; }
+        }
+
         @media(max-width:700px){
-            nav { padding:0 20px; }
+            body { font-size:15px; }
+            nav { padding:0 20px; height:58px; gap:12px; }
+            .nav-back { min-height:44px; font-size:12px; white-space:nowrap; }
+            .nav-title { display:none; }
+            .nav-tag { max-width:46vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
             .page-wrap { padding:0 20px; }
-            .hero { padding:100px 0 60px; }
-            .arch-label { width:100px; font-size:9px; }
+            .hero { padding:96px 0 56px; }
+            .hero-title { font-size:clamp(32px,11vw,44px); letter-spacing:0; }
+            .hero-sub { font-size:15px; line-height:1.7; }
+            .hero-meta { gap:20px; }
+            .section { padding:56px 0; }
+            .section-title { font-size:24px; }
+            .arch-layer { display:block; }
+            .arch-label { width:100%; justify-content:flex-start; border-right:0; border-bottom:1px solid var(--border); }
+            .role-grid,
             .scenario-grid { grid-template-columns:1fr; }
+            .scenario-img { height:190px; }
+            .eq-card,
+            .callout,
+            .role-card { padding-left:18px; padding-right:18px; }
+            .eq-card { overflow-x:auto; text-align:left; }
+            .eq-body { min-width:520px; }
+            .results-wrap { margin-left:-20px; margin-right:-20px; padding:0 20px; }
+            .results-table { min-width:520px; }
+            .lightbox img { max-width:94vw; max-height:84vh; }
+            .lb-close { top:16px; right:18px; }
+        }
+
+        @media(max-width:480px){
+            nav { padding:0 16px; }
+            .nav-tag { display:none; }
+            .page-wrap { padding:0 16px; }
+            .hero { padding-top:88px; }
+            .hero-title { font-size:clamp(30px,10vw,38px); }
+            .hero-meta { gap:16px; }
+            .spec-grid { grid-template-columns:1fr; }
+            .scenario-img { height:180px; }
+            .arch-body,
+            .eq-card,
+            .callout,
+            .role-card { padding:16px; }
+            .results-wrap { margin-left:-16px; margin-right:-16px; padding:0 16px; }
+            .sub-title { font-size:12px; }
         }
     </style>
 </head>
@@ -345,24 +389,26 @@
         </div>
 
         <div class="sub-title reveal">success rate breakdown</div>
-        <table class="results-table reveal">
-            <thead>
-                <tr>
-                    <th># Obstacle Vehicles</th>
-                    <th>Trials</th>
-                    <th>Successes</th>
-                    <th>Rate</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td>1</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
-                <tr><td>2</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
-                <tr><td>3</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
-                <tr><td>4</td><td>5</td><td>4</td><td class="rate-amber">80%</td></tr>
-                <tr><td>5</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
-                <tr><td>6</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
-            </tbody>
-        </table>
+        <div class="results-wrap reveal">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th># Obstacle Vehicles</th>
+                        <th>Trials</th>
+                        <th>Successes</th>
+                        <th>Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>1</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+                    <tr><td>2</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+                    <tr><td>3</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+                    <tr><td>4</td><td>5</td><td>4</td><td class="rate-amber">80%</td></tr>
+                    <tr><td>5</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+                    <tr><td>6</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="callout amber reveal">
             <div class="callout-label">known limitation</div>

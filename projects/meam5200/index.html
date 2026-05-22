@@ -265,12 +265,52 @@
         /* ─── FOOTER ─────────────────────────────── */
         .footer { padding: 48px 0; text-align: center; font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
 
+        @media (max-width: 900px) {
+            nav { padding: 0 32px; }
+            .page-wrap { padding: 0 32px; }
+            .gallery-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+        }
+
         @media (max-width: 700px) {
-            nav { padding: 0 20px; }
+            body { font-size: 15px; }
+            nav { padding: 0 20px; height: 58px; gap: 12px; }
+            .nav-back { min-height: 44px; font-size: 12px; white-space: nowrap; }
+            .nav-title { display: none; }
+            .nav-tag { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .page-wrap { padding: 0 20px; }
-            .gallery-grid.cols-2, .gallery-grid.cols-3 { grid-template-columns: 1fr; }
-            .hero { padding: 100px 0 60px; }
+            .hero { padding: 96px 0 56px; }
+            .hero-title { font-size: clamp(32px, 11vw, 44px); letter-spacing: 0; }
+            .hero-sub { font-size: 15px; line-height: 1.7; }
+            .hero-meta { gap: 20px; }
+            .section { padding: 56px 0; }
+            .section-title { font-size: 24px; }
+            .gallery-grid.cols-2,
+            .gallery-grid.cols-3 { grid-template-columns: 1fr; }
+            .gallery-item img { height: 220px; }
+            .role-grid,
+            .score-card { grid-template-columns: 1fr; }
             .timeline { padding-left: 24px; }
+            .tl-card,
+            .callout,
+            .score-item { padding-left: 18px; padding-right: 18px; }
+            .video-wrap { border-radius: 8px; }
+            .lightbox img { max-width: 94vw; max-height: 84vh; }
+            .lb-close { top: 16px; right: 18px; }
+        }
+
+        @media (max-width: 480px) {
+            nav { padding: 0 16px; }
+            .nav-tag { display: none; }
+            .page-wrap { padding: 0 16px; }
+            .hero { padding-top: 88px; }
+            .hero-title { font-size: clamp(30px, 10vw, 38px); }
+            .hero-meta { gap: 16px; }
+            .spec-grid { grid-template-columns: 1fr; }
+            .gallery-item img { height: 200px; }
+            .sub-title { font-size: 12px; }
+            .tl-card,
+            .role-card,
+            .callout { padding: 16px; }
         }
     </style>
 </head>
