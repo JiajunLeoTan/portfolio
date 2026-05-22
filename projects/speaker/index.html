@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrated Speaker System — Leo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:           #070a0f;
+            --bg-surface:   #0d1117;
+            --bg-card:      #0f1720;
+            --border:       #1a2333;
+            --border-hover: #2a3a50;
+            --accent:       #00c896;
+            --accent-blue:  #4a9eff;
+            --accent-amber: #f0a830;
+            --accent-dim:   rgba(0, 200, 150, 0.10);
+            --text:         #dde6f0;
+            --text-muted:   #7a8fa8;
+            --text-dim:     #3d4f63;
+            --mono:         'JetBrains Mono', monospace;
+            --sans:         'Sora', sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 16px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,200,150,0.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,200,150,0.018) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── NAV ─────────────────────────────────── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            height: 60px;
+            background: rgba(7,10,15,0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .nav-back:hover { color: var(--accent); }
+        .nav-back svg { width: 16px; height: 16px; }
+        .nav-title {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 0.06em;
+        }
+        .nav-tag {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--accent);
+            background: var(--accent-dim);
+            border: 1px solid rgba(0,200,150,0.2);
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* ─── LAYOUT ─────────────────────────────── */
+        .page-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ─── HERO ───────────────────────────────── */
+        .hero {
+            padding: 120px 0 80px;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero-eyebrow {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--accent);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+        .hero-title {
+            font-size: clamp(36px, 5vw, 58px);
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+        }
+        .hero-sub {
+            font-size: 17px;
+            color: var(--text-muted);
+            max-width: 680px;
+            line-height: 1.7;
+            margin-bottom: 40px;
+        }
+        .hero-meta {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .meta-label {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .meta-val {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--text);
+        }
+        .meta-val.accent { color: var(--accent); }
+
+        /* ─── SECTION ────────────────────────────── */
+        .section {
+            padding: 72px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .section-label {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--accent);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 32px;
+        }
+        .section-body {
+            font-size: 15px;
+            color: var(--text-muted);
+            max-width: 760px;
+            line-height: 1.8;
+        }
+        .section-body p + p { margin-top: 16px; }
+
+        /* ─── SPEC TABLE ─────────────────────────── */
+        .spec-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 32px;
+        }
+        .spec-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 18px 22px;
+            background: var(--bg-card);
+        }
+        .spec-key {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .spec-val {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        /* ─── ROLE CARDS ─────────────────────────── */
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 32px;
+        }
+        .role-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            transition: border-color 0.2s;
+        }
+        .role-card:hover { border-color: var(--border-hover); }
+        .role-card-icon {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .role-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .role-card-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.65;
+        }
+
+        /* ─── SUBSECTION ─────────────────────────── */
+        .subsection {
+            margin-top: 56px;
+        }
+        .subsection:first-child { margin-top: 0; }
+        .sub-title {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--accent-blue);
+            letter-spacing: 0.06em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sub-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ─── IMAGE GALLERY ──────────────────────── */
+        .gallery-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .gallery-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .gallery-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .gallery-grid.cols-1 { grid-template-columns: 1fr; max-width: 800px; }
+
+        .gallery-item {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .gallery-item:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 260px;
+            object-fit: contain;
+            background: #0a0e16;
+            display: block;
+            padding: 12px;
+        }
+        .gallery-item img.dark-bg {
+            background: #111;
+            padding: 0;
+            height: 240px;
+            object-fit: contain;
+        }
+        .gallery-caption {
+            padding: 10px 14px 12px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+        }
+        .gallery-caption strong {
+            color: var(--text);
+            display: block;
+            margin-bottom: 2px;
+            font-size: 12px;
+        }
+
+        /* Full image pair (3D + cutaway side by side) */
+        .pair-wrap { display: contents; }
+
+        /* ─── IMPROVEMENT CARDS ──────────────────── */
+        .improvement-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 32px;
+        }
+        .improvement-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .improvement-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            background: #111;
+            padding: 8px;
+            display: block;
+        }
+        .improvement-body {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+        .improvement-label {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .improvement-stat {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .stat-before {
+            font-family: var(--mono);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-decoration: line-through;
+        }
+        .stat-arrow {
+            font-family: var(--mono);
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .stat-after {
+            font-family: var(--mono);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .stat-unit {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ─── TECH TAGS ──────────────────────────── */
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 28px;
+        }
+        .tag {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 5px 12px;
+            background: var(--bg-card);
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .tag:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ─── LIGHTBOX ───────────────────────────── */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .lightbox.open { display: flex; }
+        .lightbox img {
+            max-width: 92vw;
+            max-height: 88vh;
+            object-fit: contain;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+        .lb-close {
+            position: fixed;
+            top: 24px; right: 28px;
+            font-family: var(--mono);
+            font-size: 22px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .lb-close:hover { color: var(--text); }
+
+        /* ─── CALLOUT ────────────────────────────── */
+        .callout {
+            background: rgba(0, 200, 150, 0.05);
+            border: 1px solid rgba(0,200,150,0.2);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-top: 32px;
+        }
+        .callout-label {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .callout-text {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* ─── FOOTER ─────────────────────────────── */
+        .footer {
+            padding: 48px 0;
+            text-align: center;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        /* ─── REVEAL ANIMATION ───────────────────── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        @media (max-width: 700px) {
+            nav { padding: 0 20px; }
+            .page-wrap { padding: 0 20px; }
+            .gallery-grid.cols-2,
+            .gallery-grid.cols-3,
+            .improvement-grid { grid-template-columns: 1fr; }
+            .hero { padding: 100px 0 60px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <a class="nav-back" href="../../index.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M10 3L5 8l5 5"/>
+        </svg>
+        back to portfolio
+    </a>
+    <span class="nav-title">// mechanical engineering</span>
+    <span class="nav-tag">near-production</span>
+</nav>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lb-close">✕</span>
+    <img id="lb-img" src="" alt="">
+</div>
+
+<div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow reveal">University of Melbourne · ENGR30002</div>
+        <h1 class="hero-title reveal">Integrated Speaker<br>System Design</h1>
+        <p class="hero-sub reveal">End-to-end design of a near-production speaker system — custom woofer and tweeter with SolidWorks-modeled magnetic motor structure and voice coil, a golden-ratio ash-wood enclosure to suppress standing-wave modes, and a full LTSpice-simulated signal chain including two three-band equalizer variants and a passive three-way crossover network.</p>
+        <div class="hero-meta reveal">
+            <div class="meta-item">
+                <span class="meta-label">Scope</span>
+                <span class="meta-val">Mechanical + Electronics</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">CAD</span>
+                <span class="meta-val">SolidWorks</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Simulation</span>
+                <span class="meta-val">LTSpice</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Status</span>
+                <span class="meta-val accent">Near-production</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="section">
+        <div class="section-label reveal">// 01 · overview</div>
+        <div class="section-title reveal">Project Summary</div>
+        <div class="section-body reveal">
+            <p>The project called for designing a complete speaker system from first principles — not just selecting off-the-shelf components, but engineering custom driver units with full mechanical and electromagnetic detail, an acoustically tuned enclosure, and an active/passive signal processing chain. Every component was designed to meet real-world manufacturability constraints with 1 mm tolerance allowances throughout.</p>
+            <p>Two equalizer approaches were designed and optimized in parallel: a passive RLC-based design and an active op-amp design. Both were simulated in LTSpice and iteratively improved, achieving peak flatness improvements from 1.6 dB to 0.6 dB (passive) and 3.5 dB to 1.05 dB (active). A three-way passive crossover network completed the signal chain, routing bass to the woofer, midrange through the equalizers, and highs to the tweeter with −3 dB crossover points at 350 Hz and 2500 Hz.</p>
+        </div>
+        <div class="spec-grid reveal">
+            <div class="spec-row">
+                <span class="spec-key">Enclosure</span>
+                <span class="spec-val">262 × 235 × 634 mm</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Enclosure Material</span>
+                <span class="spec-val">Ash wood (selected)</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Cavity Design</span>
+                <span class="spec-val">Golden-ratio internal</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Crossover Points</span>
+                <span class="spec-val">350 Hz / 2500 Hz</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">EQ Bands</span>
+                <span class="spec-val">Bass / Mid / Treble</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">EQ Variants</span>
+                <span class="spec-val">Passive RLC + Active op-amp</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Tolerance</span>
+                <span class="spec-val">1 mm throughout</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Fabrication Status</span>
+                <span class="spec-val">Near-production (digital)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHAT I BUILT -->
+    <div class="section">
+        <div class="section-label reveal">// 02 · contributions</div>
+        <div class="section-title reveal">What I Built</div>
+        <div class="role-grid">
+            <div class="role-card reveal">
+                <div class="role-card-icon">// mechanical</div>
+                <div class="role-card-title">Woofer Driver Design</div>
+                <div class="role-card-desc">Designed the woofer from scratch in SolidWorks — magnetic motor structure, voice coil geometry, spider suspension, and cone assembly. Material selections balanced stiffness, damping coefficient, thermal tolerance, and cost with full GD&T annotations.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// mechanical</div>
+                <div class="role-card-title">Tweeter Driver Design</div>
+                <div class="role-card-desc">Engineered the tweeter with a dome diaphragm and compact ferrofluid-cooled voice coil assembly. Designed to reproduce high-frequency content above the 2500 Hz crossover point with minimal resonance.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// acoustics</div>
+                <div class="role-card-title">Enclosure Design</div>
+                <div class="role-card-desc">Designed the ash-wood enclosure using golden-ratio cavity proportions (262×235×634 mm) to suppress standing-wave modes. Modeled in SolidWorks with internal bracing, driver cutouts, and flush-mount hardware.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// electronics</div>
+                <div class="role-card-title">Passive 3-Band Equalizer</div>
+                <div class="role-card-desc">Designed and simulated a passive three-band equalizer using RLC bandpass, RC lowpass, and RC highpass filters with a summing amplifier. Optimized component values in LTSpice to reduce peak-to-valley variation from 1.6 dB to 0.6 dB.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// electronics</div>
+                <div class="role-card-title">Active 3-Band Equalizer</div>
+                <div class="role-card-desc">Designed an active op-amp equalizer with a 2nd-order active RC bandpass, active lowpass, and active highpass filter topology. Iterated on gain and cutoff values to reduce response variation from 3.5 dB to 1.05 dB — a 70% improvement.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// electronics</div>
+                <div class="role-card-title">3-Way Passive Crossover</div>
+                <div class="role-card-desc">Designed a three-way passive crossover network with −3 dB crossover frequencies at 350 Hz and 2500 Hz, routing bass, midrange, and treble to their respective drivers. Verified crossover band overlap in LTSpice AC sweep.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MECHANICAL DESIGN -->
+    <div class="section">
+        <div class="section-label reveal">// 03 · mechanical design</div>
+        <div class="section-title reveal">Driver Units & Enclosure</div>
+
+        <div class="subsection reveal">
+            <div class="sub-title">woofer</div>
+            <div class="gallery-grid cols-2">
+                <div class="gallery-item" onclick="openLightbox('woofer-3d.png')">
+                    <img src="woofer-3d.png" alt="Woofer 3D render">
+                    <div class="gallery-caption">
+                        <strong>Woofer — Assembly</strong>
+                        Magnetic motor structure, spider, and cone
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('woofer-cutaway.png')">
+                    <img src="woofer-cutaway.png" alt="Woofer cross-section">
+                    <div class="gallery-caption">
+                        <strong>Woofer — Cross-section</strong>
+                        Voice coil, gap, and motor internals
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection reveal">
+            <div class="sub-title">tweeter</div>
+            <div class="gallery-grid cols-2">
+                <div class="gallery-item" onclick="openLightbox('tweeter-3d.png')">
+                    <img src="tweeter-3d.png" alt="Tweeter 3D render">
+                    <div class="gallery-caption">
+                        <strong>Tweeter — Assembly</strong>
+                        Dome diaphragm and flange mounting
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('tweeter-cutaway.png')">
+                    <img src="tweeter-cutaway.png" alt="Tweeter cross-section">
+                    <div class="gallery-caption">
+                        <strong>Tweeter — Cross-section</strong>
+                        Compact voice coil and magnet assembly
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection reveal">
+            <div class="sub-title">enclosure</div>
+            <div class="gallery-grid cols-2">
+                <div class="gallery-item" onclick="openLightbox('enclosure-3d.png')">
+                    <img src="enclosure-3d.png" alt="Enclosure 3D render">
+                    <div class="gallery-caption">
+                        <strong>Enclosure — Assembly</strong>
+                        262×235×634 mm ash-wood cabinet
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('enclosure-cutaway.png')">
+                    <img src="enclosure-cutaway.png" alt="Enclosure cross-section">
+                    <div class="gallery-caption">
+                        <strong>Enclosure — Cross-section</strong>
+                        Internal cavity and driver placement
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout reveal">
+            <div class="callout-label">design note</div>
+            <div class="callout-text">The enclosure cavity dimensions were derived from the golden ratio (≈1:1.618) applied across all three axes. This proportioning prevents two or more standing-wave modes from coinciding at the same frequency — a key acoustic design principle for reducing resonance coloration. Ash wood was selected over MDF and birch after a multi-criteria materials analysis weighing stiffness, internal damping, machinability, density, and cost.</div>
+        </div>
+    </div>
+
+    <!-- ELECTRONICS -->
+    <div class="section">
+        <div class="section-label reveal">// 04 · electronics & simulation</div>
+        <div class="section-title reveal">Equalizer & Crossover Designs</div>
+
+        <div class="subsection reveal">
+            <div class="sub-title">design 1 — passive equalizer (RLC + RC)</div>
+            <div class="gallery-grid cols-2">
+                <div class="gallery-item" onclick="openLightbox('eq1-passive-schematic.png')">
+                    <img class="dark-bg" src="eq1-passive-schematic.png" alt="Passive equalizer schematic">
+                    <div class="gallery-caption">
+                        <strong>Design 1 — Initial</strong>
+                        RLC bandpass + RC lowpass/highpass + summing amp
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('eq1-optimized-schematic.png')">
+                    <img class="dark-bg" src="eq1-optimized-schematic.png" alt="Optimized passive equalizer">
+                    <div class="gallery-caption">
+                        <strong>Design 1 — Optimized</strong>
+                        Tuned component values for flatter response
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection reveal">
+            <div class="sub-title">design 2 — active equalizer (op-amp RC)</div>
+            <div class="gallery-grid cols-2">
+                <div class="gallery-item" onclick="openLightbox('eq2-active-schematic.png')">
+                    <img class="dark-bg" src="eq2-active-schematic.png" alt="Active equalizer schematic">
+                    <div class="gallery-caption">
+                        <strong>Design 2 — Initial</strong>
+                        2nd-order active bandpass + active lowpass/highpass
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('eq2-optimized-schematic.png')">
+                    <img class="dark-bg" src="eq2-optimized-schematic.png" alt="Optimized active equalizer">
+                    <div class="gallery-caption">
+                        <strong>Design 2 — Optimized</strong>
+                        Gain and cutoff values retuned for flatness
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection reveal">
+            <div class="sub-title">three-way passive crossover network</div>
+            <div class="gallery-grid cols-1">
+                <div class="gallery-item" onclick="openLightbox('crossover-passive.png')">
+                    <img class="dark-bg" src="crossover-passive.png" alt="Passive crossover network">
+                    <div class="gallery-caption">
+                        <strong>3-Way Crossover</strong>
+                        Passive LC network — 350 Hz and 2500 Hz crossover points
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FREQUENCY RESPONSE -->
+    <div class="section">
+        <div class="section-label reveal">// 05 · simulation results</div>
+        <div class="section-title reveal">Frequency Response Analysis</div>
+
+        <div class="section-body reveal">
+            <p>All frequency responses were verified via LTSpice AC sweep simulation (10 Hz – 10 kHz). The crossover network shows clean −3 dB handoffs at 350 Hz and 2500 Hz with acceptable band overlap. Both equalizers were iteratively optimized: the passive design improved peak-to-valley variation by 63%, while the active design improved by 70%.</p>
+        </div>
+
+        <div class="subsection reveal">
+            <div class="sub-title">filter band responses</div>
+            <div class="gallery-grid cols-3">
+                <div class="gallery-item" onclick="openLightbox('freq-eq1-bands.png')">
+                    <img class="dark-bg" src="freq-eq1-bands.png" alt="Design 1 band frequency responses">
+                    <div class="gallery-caption">
+                        <strong>Design 1 — Band Responses</strong>
+                        LP / BP / HP at 200 Hz – 2 kHz
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('freq-eq2-bands.png')">
+                    <img class="dark-bg" src="freq-eq2-bands.png" alt="Design 2 band frequency responses">
+                    <div class="gallery-caption">
+                        <strong>Design 2 — Band Responses</strong>
+                        Active LP / BP / HP at 200 Hz – 2 kHz
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('freq-crossover.png')">
+                    <img class="dark-bg" src="freq-crossover.png" alt="Crossover frequency response">
+                    <div class="gallery-caption">
+                        <strong>Crossover Response</strong>
+                        −3 dB at 350 Hz and 2500 Hz
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection reveal">
+            <div class="sub-title">optimization results — combined output flatness</div>
+
+            <div class="improvement-grid">
+                <div class="improvement-card">
+                    <img src="freq-eq1-response.png" alt="Design 1 before optimization" onclick="openLightbox('freq-eq1-response.png')" style="cursor:pointer">
+                    <div class="improvement-body">
+                        <div class="improvement-label">Design 1 (Passive) — Initial</div>
+                        <div class="improvement-stat">
+                            <span class="stat-before">1.6dB</span>
+                            <span class="stat-arrow">variation</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="improvement-card">
+                    <img src="freq-eq1-optimized.png" alt="Design 1 after optimization" onclick="openLightbox('freq-eq1-optimized.png')" style="cursor:pointer">
+                    <div class="improvement-body">
+                        <div class="improvement-label">Design 1 (Passive) — Optimized</div>
+                        <div class="improvement-stat">
+                            <span class="stat-after">0.6dB</span>
+                            <span class="stat-unit">variation (−63%)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="improvement-card">
+                    <img src="freq-eq2-response.png" alt="Design 2 before optimization" onclick="openLightbox('freq-eq2-response.png')" style="cursor:pointer">
+                    <div class="improvement-body">
+                        <div class="improvement-label">Design 2 (Active) — Initial</div>
+                        <div class="improvement-stat">
+                            <span class="stat-before">3.5dB</span>
+                            <span class="stat-arrow">variation</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="improvement-card">
+                    <img src="freq-eq2-optimized.png" alt="Design 2 after optimization" onclick="openLightbox('freq-eq2-optimized.png')" style="cursor:pointer">
+                    <div class="improvement-body">
+                        <div class="improvement-label">Design 2 (Active) — Optimized</div>
+                        <div class="improvement-stat">
+                            <span class="stat-after">1.05dB</span>
+                            <span class="stat-unit">variation (−70%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TECH STACK -->
+    <div class="section">
+        <div class="section-label reveal">// 06 · tools & methods</div>
+        <div class="section-title reveal">Tech Stack</div>
+        <div class="tag-list reveal">
+            <span class="tag">SolidWorks</span>
+            <span class="tag">LTSpice</span>
+            <span class="tag">AC Sweep Simulation</span>
+            <span class="tag">RLC Filter Design</span>
+            <span class="tag">Active Op-amp Filters</span>
+            <span class="tag">Passive Crossover Networks</span>
+            <span class="tag">Summing Amplifier</span>
+            <span class="tag">GD&T</span>
+            <span class="tag">Materials Selection</span>
+            <span class="tag">Acoustics</span>
+            <span class="tag">Golden-Ratio Cavity Design</span>
+            <span class="tag">Voice Coil Design</span>
+            <span class="tag">Magnetic Motor Structures</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        &lt;— <a href="../../index.html" style="color:var(--accent);text-decoration:none;">back to portfolio</a>
+    </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+    // ─── Lightbox ───────────────────────────────────────────────────
+    function openLightbox(src) {
+        document.getElementById('lb-img').src = src;
+        document.getElementById('lightbox').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    // ─── Reveal on scroll ───────────────────────────────────────────
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('visible');
+                observer.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach((el, i) => {
+        el.style.transitionDelay = `${(i % 4) * 60}ms`;
+        observer.observe(el);
+    });
+</script>
+</body>
+</html>
