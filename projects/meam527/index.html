@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Vehicle Lane Change — MPC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg:           #070a0f;
+            --bg-surface:   #0d1117;
+            --bg-card:      #0f1720;
+            --border:       #1a2333;
+            --border-hover: #2a3a50;
+            --accent:       #00c896;
+            --accent-blue:  #4a9eff;
+            --accent-amber: #f0a830;
+            --accent-purple:#c084fc;
+            --accent-red:   #ff6b6b;
+            --accent-dim:   rgba(0,200,150,0.10);
+            --text:         #dde6f0;
+            --text-muted:   #7a8fa8;
+            --text-dim:     #3d4f63;
+            --mono:         'JetBrains Mono', monospace;
+            --sans:         'Sora', sans-serif;
+        }
+        html { scroll-behavior: smooth; }
+        body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.7; overflow-x: hidden; }
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background-image: linear-gradient(rgba(0,200,150,0.018) 1px,transparent 1px), linear-gradient(90deg,rgba(0,200,150,0.018) 1px,transparent 1px);
+            background-size: 48px 48px; pointer-events: none; z-index: 0;
+        }
+
+        /* NAV */
+        nav { position: fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 48px; height:60px; background:rgba(7,10,15,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
+        .nav-back { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:13px; color:var(--text-muted); text-decoration:none; transition:color .2s; }
+        .nav-back:hover { color:var(--accent); }
+        .nav-back svg { width:16px; height:16px; }
+        .nav-title { font-family:var(--mono); font-size:12px; color:var(--text-dim); letter-spacing:.06em; }
+        .nav-tag { font-family:var(--mono); font-size:11px; color:var(--accent-blue); background:rgba(74,158,255,.1); border:1px solid rgba(74,158,255,.25); padding:3px 10px; border-radius:20px; }
+
+        /* LAYOUT */
+        .page-wrap { max-width:1100px; margin:0 auto; padding:0 40px; position:relative; z-index:1; }
+
+        /* HERO */
+        .hero { padding:120px 0 80px; border-bottom:1px solid var(--border); }
+        .hero-eyebrow { font-family:var(--mono); font-size:12px; color:var(--accent); letter-spacing:.12em; text-transform:uppercase; margin-bottom:20px; }
+        .hero-title { font-size:clamp(34px,5vw,56px); font-weight:600; line-height:1.1; letter-spacing:-.02em; margin-bottom:24px; }
+        .hero-sub { font-size:17px; color:var(--text-muted); max-width:700px; line-height:1.7; margin-bottom:40px; }
+        .hero-meta { display:flex; gap:32px; flex-wrap:wrap; }
+        .meta-item { display:flex; flex-direction:column; gap:4px; }
+        .meta-label { font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:.1em; text-transform:uppercase; }
+        .meta-val { font-family:var(--mono); font-size:13px; color:var(--text); }
+        .meta-val.green { color:var(--accent); }
+        .meta-val.blue  { color:var(--accent-blue); }
+
+        /* SECTION */
+        .section { padding:72px 0; border-bottom:1px solid var(--border); }
+        .section-label { font-family:var(--mono); font-size:11px; color:var(--accent); letter-spacing:.12em; text-transform:uppercase; margin-bottom:10px; }
+        .section-title { font-size:28px; font-weight:600; letter-spacing:-.02em; margin-bottom:32px; }
+        .section-body { font-size:15px; color:var(--text-muted); max-width:760px; line-height:1.8; }
+        .section-body p+p { margin-top:16px; }
+
+        /* SPEC GRID */
+        .spec-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-top:32px; }
+        .spec-row { display:flex; flex-direction:column; gap:4px; padding:18px 22px; background:var(--bg-card); }
+        .spec-key { font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:.1em; text-transform:uppercase; }
+        .spec-val { font-family:var(--mono); font-size:13px; color:var(--text); }
+
+        /* ARCHITECTURE STACK */
+        .arch-stack { display:flex; flex-direction:column; gap:2px; margin-top:36px; }
+        .arch-layer {
+            display:flex; align-items:stretch;
+            border:1px solid var(--border); border-radius:8px;
+            overflow:hidden; transition:border-color .2s;
+        }
+        .arch-layer:hover { border-color:var(--border-hover); }
+        .arch-label {
+            width:160px; flex-shrink:0;
+            display:flex; align-items:center; justify-content:center;
+            padding:14px 16px; text-align:center;
+            font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+            border-right:1px solid var(--border);
+        }
+        .arch-label.perception  { color:var(--accent-purple); background:rgba(192,132,252,.07); }
+        .arch-label.behavior    { color:var(--accent); background:rgba(0,200,150,.06); }
+        .arch-label.trajectory  { color:var(--accent-blue); background:rgba(74,158,255,.06); }
+        .arch-label.mpc         { color:var(--accent-amber); background:rgba(240,168,48,.06); }
+        .arch-label.dynamics    { color:var(--text-muted); background:rgba(122,143,168,.06); }
+        .arch-body { flex:1; padding:14px 20px; background:var(--bg-card); }
+        .arch-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+        .arch-desc { font-size:13px; color:var(--text-muted); line-height:1.6; }
+        .arch-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+        .arch-tag { font-family:var(--mono); font-size:10px; color:var(--text-dim); border:1px solid var(--border); border-radius:3px; padding:2px 7px; }
+
+        /* ROLE CARDS */
+        .role-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; margin-top:32px; }
+        .role-card { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:24px; transition:border-color .2s; }
+        .role-card:hover { border-color:var(--border-hover); }
+        .role-card-icon { font-family:var(--mono); font-size:11px; color:var(--accent); margin-bottom:12px; }
+        .role-card-title { font-size:15px; font-weight:600; margin-bottom:8px; }
+        .role-card-desc { font-size:14px; color:var(--text-muted); line-height:1.65; }
+
+        /* SCENARIO CARDS */
+        .scenario-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; margin-top:32px; }
+        .scenario-card { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; overflow:hidden; transition:border-color .2s, transform .2s; cursor:pointer; }
+        .scenario-card:hover { border-color:var(--border-hover); transform:translateY(-2px); }
+        .scenario-img { width:100%; height:200px; object-fit:contain; background:#0a0e16; padding:12px; display:block; }
+        .scenario-img.cover { object-fit:cover; padding:0; }
+        .scenario-body { padding:16px 20px; border-top:1px solid var(--border); }
+        .scenario-title { font-size:14px; font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+        .scenario-badge { font-family:var(--mono); font-size:10px; padding:2px 7px; border-radius:10px; border:1px solid; }
+        .badge-pass  { color:var(--accent);      border-color:rgba(0,200,150,.4); background:rgba(0,200,150,.08); }
+        .badge-partial { color:var(--accent-amber); border-color:rgba(240,168,48,.4); background:rgba(240,168,48,.08); }
+        .badge-fail  { color:var(--accent-red);   border-color:rgba(255,107,107,.4); background:rgba(255,107,107,.08); }
+        .scenario-desc { font-size:13px; color:var(--text-muted); line-height:1.6; }
+
+        /* RESULTS TABLE */
+        .results-table { width:100%; border-collapse:collapse; margin-top:32px; font-size:14px; }
+        .results-table th { font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); padding:10px 16px; border-bottom:1px solid var(--border); text-align:left; }
+        .results-table td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--text-muted); font-family:var(--mono); font-size:13px; }
+        .results-table tr:last-child td { border-bottom:none; }
+        .results-table tr:hover td { background:var(--bg-card); }
+        .rate-green { color:var(--accent); }
+        .rate-amber { color:var(--accent-amber); }
+
+        /* CALLOUT */
+        .callout { background:rgba(0,200,150,.05); border:1px solid rgba(0,200,150,.2); border-radius:8px; padding:20px 24px; margin-top:28px; }
+        .callout.amber { background:rgba(240,168,48,.05); border-color:rgba(240,168,48,.2); }
+        .callout-label { font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
+        .callout.amber .callout-label { color:var(--accent-amber); }
+        .callout-text { font-size:14px; color:var(--text-muted); line-height:1.7; }
+
+        /* EQUATION */
+        .eq-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:20px 28px; margin-top:28px; text-align:center; }
+        .eq-label { font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:.1em; text-transform:uppercase; margin-bottom:14px; }
+        .eq-body { font-family:var(--mono); font-size:14px; color:var(--text); line-height:2; }
+
+        /* TAGS */
+        .tag-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:28px; }
+        .tag { font-family:var(--mono); font-size:12px; color:var(--text-muted); border:1px solid var(--border); border-radius:4px; padding:5px 12px; background:var(--bg-card); transition:border-color .2s,color .2s; }
+        .tag:hover { border-color:var(--accent); color:var(--accent); }
+
+        /* SUBSECTION */
+        .sub-title { font-family:var(--mono); font-size:13px; color:var(--accent-blue); letter-spacing:.06em; margin:48px 0 20px; display:flex; align-items:center; gap:10px; }
+        .sub-title::after { content:''; flex:1; height:1px; background:var(--border); }
+        .sub-title:first-child { margin-top:0; }
+
+        /* LIGHTBOX */
+        .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:1000; align-items:center; justify-content:center; cursor:pointer; }
+        .lightbox.open { display:flex; }
+        .lightbox img { max-width:92vw; max-height:88vh; object-fit:contain; border:1px solid var(--border); border-radius:6px; }
+        .lb-close { position:fixed; top:24px; right:28px; font-family:var(--mono); font-size:22px; color:var(--text-muted); cursor:pointer; }
+
+        /* REVEAL */
+        .reveal { opacity:0; transform:translateY(24px); transition:opacity .5s ease,transform .5s ease; }
+        .reveal.visible { opacity:1; transform:none; }
+
+        /* FOOTER */
+        .footer { padding:48px 0; text-align:center; font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+
+        @media(max-width:700px){
+            nav { padding:0 20px; }
+            .page-wrap { padding:0 20px; }
+            .hero { padding:100px 0 60px; }
+            .arch-label { width:100px; font-size:9px; }
+            .scenario-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-back" href="../../index.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3L5 8l5 5"/></svg>
+        back to portfolio
+    </a>
+    <span class="nav-title">// robotics & control</span>
+    <span class="nav-tag">MPC · Drake · Bicycle Model</span>
+</nav>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lb-close">✕</span>
+    <img id="lb-img" src="" alt="">
+</div>
+
+<div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow reveal">Penn MEAM 517 · Control & Optimization with Applications in Robotics</div>
+        <h1 class="hero-title reveal">Autonomous Vehicle<br>Lane Change with MPC</h1>
+        <p class="hero-sub reveal">A full-stack autonomous driving framework — from noisy perception through behavior planning to model predictive control — enabling an ego vehicle to detect surrounding traffic, decide when to change lanes, generate a dynamically consistent reference, and track it using a Drake-backed MPC over a 6-state bicycle model.</p>
+        <div class="hero-meta reveal">
+            <div class="meta-item">
+                <span class="meta-label">Vehicle Model</span>
+                <span class="meta-val">6-state dynamic bicycle</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Controller</span>
+                <span class="meta-val">Receding horizon MPC (Drake)</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Solver</span>
+                <span class="meta-val">SNOPT</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Success rate</span>
+                <span class="meta-val green">29/30 (straight traffic)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SYSTEM ARCHITECTURE -->
+    <div class="section">
+        <div class="section-label reveal">// 01 · system design</div>
+        <div class="section-title reveal">5-Layer Architecture</div>
+        <div class="section-body reveal">
+            <p>Each layer has a single responsibility and a clean interface to the next. Perception feeds noisy obstacle estimates up to the behavior planner; the planner outputs a 4-state reference request; trajectory generation expands this to a 6-state horizon; the MPC solves for optimal controls; the bicycle model integrates forward. Any layer can be swapped independently.</p>
+        </div>
+
+        <div class="arch-stack reveal">
+            <div class="arch-layer">
+                <div class="arch-label perception">Perception</div>
+                <div class="arch-body">
+                    <div class="arch-title">NoisyPerception</div>
+                    <div class="arch-desc">5 Hz low-rate obstacle sensing with Gaussian position noise (σ<sub>x</sub>=0.5 m, σ<sub>y</sub>=0.3 m). Simulates realistic sensor uncertainty — the behavior planner never sees ground-truth obstacle positions.</div>
+                    <div class="arch-tags"><span class="arch-tag">5 Hz update</span><span class="arch-tag">Gaussian noise</span><span class="arch-tag">obstacle list</span></div>
+                </div>
+            </div>
+            <div class="arch-layer">
+                <div class="arch-label behavior">Behavior</div>
+                <div class="arch-body">
+                    <div class="arch-title">ObstacleAwarePlanner (extends BehaviorPlanner)</div>
+                    <div class="arch-desc">Finite-state machine (CRUISE / LANE_CHANGE_TO). Scores all lanes by distance + TTC to nearest lead vehicle, with a center-lane bias. Hysteresis requires 3 consecutive frames of agreement before committing to a lane change. Post-change cooldown prevents oscillation. Outputs a <code style="font-family:var(--mono);font-size:12px">TrajectoryRequest</code> with target lane, cruise speed, and pre-computed quintic coefficients.</div>
+                    <div class="arch-tags"><span class="arch-tag">FSM</span><span class="arch-tag">TTC scoring</span><span class="arch-tag">hysteresis</span><span class="arch-tag">cooldown</span><span class="arch-tag">quintic splines</span></div>
+                </div>
+            </div>
+            <div class="arch-layer">
+                <div class="arch-label trajectory">Trajectory</div>
+                <div class="arch-body">
+                    <div class="arch-title">ReferenceProvider + TrajectoryPlanner</div>
+                    <div class="arch-desc">Converts the behavior request into a sampled 6-state reference horizon (x, y, ψ, v<sub>x</sub>, v<sub>y</sub>, ω) over T=15 steps. CRUISE mode: lane-centered straight path. LANE_CHANGE mode: executes the pre-stored quintic polynomial for lateral displacement, computing heading from dy/dx to align the vehicle with the path.</div>
+                    <div class="arch-tags"><span class="arch-tag">quintic polynomial</span><span class="arch-tag">C² continuous</span><span class="arch-tag">4 s maneuver</span><span class="arch-tag">heading from dy/dx</span></div>
+                </div>
+            </div>
+            <div class="arch-layer">
+                <div class="arch-label mpc">MPC</div>
+                <div class="arch-body">
+                    <div class="arch-title">DrakeMPC (SNOPT solver)</div>
+                    <div class="arch-desc">Receding-horizon optimization over T=15 steps (Δt=0.1 s). Decision variables: states <strong>x</strong> and controls <strong>u</strong>. Linearizes bicycle dynamics about the reference trajectory at each step (numerical Jacobian via central differences). Quadratic cost penalizes tracking error, control effort, and control rate. Only the first control is applied.</div>
+                    <div class="arch-tags"><span class="arch-tag">T=15 horizon</span><span class="arch-tag">Δt=0.1 s</span><span class="arch-tag">linearized dynamics</span><span class="arch-tag">Q/Qf/R/Rd weights</span><span class="arch-tag">SNOPT</span></div>
+                </div>
+            </div>
+            <div class="arch-layer">
+                <div class="arch-label dynamics">Dynamics</div>
+                <div class="arch-body">
+                    <div class="arch-title">VehicleBicycleModel</div>
+                    <div class="arch-desc">Rear-wheel-drive, front-wheel-steering bicycle model. State: [X, Y, ψ, v<sub>x</sub>, v<sub>y</sub>, ω]. Inputs: [δ, a<sub>x</sub>]. Lateral tire forces from small-angle slip approximation (C<sub>f</sub>=C<sub>r</sub>=80,000 N/rad). Euler-discretized for MPC; continuous model used for ground-truth simulation. Parameters match a lightweight sports car (~Mazda Miata).</div>
+                    <div class="arch-tags"><span class="arch-tag">m=1000 kg</span><span class="arch-tag">Lf=Lr=1.1 m</span><span class="arch-tag">Cf=Cr=80k N/rad</span><span class="arch-tag">Euler integration</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="eq-card reveal">
+            <div class="eq-label">MPC Cost Function</div>
+            <div class="eq-body">
+                J = Σ<sub>k=0..T-1</sub> [ (x<sub>k</sub>−r<sub>k</sub>)ᵀ Q (x<sub>k</sub>−r<sub>k</sub>) + u<sub>k</sub>ᵀ R u<sub>k</sub> + (u<sub>k+1</sub>−u<sub>k</sub>)ᵀ R<sub>d</sub> (u<sub>k+1</sub>−u<sub>k</sub>) ]<br>
+                + (x<sub>T</sub>−r<sub>T</sub>)ᵀ Q<sub>f</sub> (x<sub>T</sub>−r<sub>T</sub>)
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTRIBUTIONS -->
+    <div class="section">
+        <div class="section-label reveal">// 02 · contributions</div>
+        <div class="section-title reveal">What I Built</div>
+        <div class="role-grid">
+            <div class="role-card reveal">
+                <div class="role-card-icon">// perception</div>
+                <div class="role-card-title">NoisyPerception Module</div>
+                <div class="role-card-desc">Designed and implemented the perception layer — a low-rate (5 Hz) sensor model with independent Gaussian noise on obstacle X and Y positions. The module updates on a configurable timer, decoupling sensor latency from the simulation loop and exposing the behavior planner to realistic uncertainty rather than ground truth.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// planning</div>
+                <div class="role-card-title">Behavior Planner</div>
+                <div class="role-card-desc">Authored the full behavior planning stack — <code style="font-family:var(--mono);font-size:12px">BehaviorPlanner</code> base FSM and the <code style="font-family:var(--mono);font-size:12px">ObstacleAwarePlanner</code> extension. Designed the TTC + distance lane-scoring heuristic, the hysteresis/cooldown anti-oscillation logic, the quintic polynomial maneuver generator, and the intersection conflict detection mode.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-card-icon">// control</div>
+                <div class="role-card-title">Initial MPC Controller</div>
+                <div class="role-card-desc">Developed a prior version of the MPC controller before the final linearized Drake implementation. This included the nonlinear Euler-step dynamics formulation, constraint setup, and the cost function structure — providing the foundation that the final linearized version was built on top of.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEST SCENARIOS -->
+    <div class="section">
+        <div class="section-label reveal">// 03 · test scenarios</div>
+        <div class="section-title reveal">5 Evaluation Scenarios</div>
+        <div class="section-body reveal">
+            <p>The framework was evaluated across five progressively harder scenarios. It performs well in its design envelope — straight, unidirectional traffic — and the failure modes outside that envelope are well-understood and point to concrete future work.</p>
+        </div>
+
+        <div class="scenario-grid reveal">
+            <div class="scenario-card" onclick="openLightbox('basic-overtake.png')">
+                <img class="scenario-img cover" src="basic-overtake.png" alt="Basic overtake simulation">
+                <div class="scenario-body">
+                    <div class="scenario-title">Multi-Obstacle Overtake <span class="scenario-badge badge-pass">29/30</span></div>
+                    <div class="scenario-desc">1–6 randomly placed obstacles with noisy 5 Hz perception. Ego vehicle smoothly overtakes slower traffic. Single failure at 4 obstacles due to perception noise reducing safety margin.</div>
+                </div>
+            </div>
+            <div class="scenario-card" onclick="openLightbox('traffic-wall.png')">
+                <img class="scenario-img cover" src="traffic-wall.png" alt="Traffic wall scenario">
+                <div class="scenario-body">
+                    <div class="scenario-title">Impassable Traffic Wall <span class="scenario-badge badge-partial">partial</span></div>
+                    <div class="scenario-desc">All lanes blocked by vehicles at equal speed. Ego successfully matched lead vehicle speed. Perception noise caused oscillatory lane-change attempts — a structural planner issue, not fixable with better sensors alone.</div>
+                </div>
+            </div>
+            <div class="scenario-card" onclick="openLightbox('bicycle-model.png')">
+                <img class="scenario-img" src="bicycle-model.png" alt="Bicycle model diagram">
+                <div class="scenario-body">
+                    <div class="scenario-title">Highway Merge <span class="scenario-badge badge-partial">partial</span></div>
+                    <div class="scenario-desc">Merging into fast-moving traffic with a slow vehicle ahead. MPC input limits correctly prevented unsafe inputs. Failed when a stalled vehicle required simultaneous large acceleration + steering — exposed lack of a "yield and wait" mode.</div>
+                </div>
+            </div>
+            <div class="scenario-card" onclick="openLightbox('curved-failure.png')">
+                <img class="scenario-img" src="curved-failure.png" alt="Curved road failure">
+                <div class="scenario-body">
+                    <div class="scenario-title">Curved Road <span class="scenario-badge badge-fail">failed</span></div>
+                    <div class="scenario-desc">Quarter-circle arc (R=100 m) at 18 m/s. Vehicle drifted inward — the MPC was linearized about zero steering, penalizing the nonzero v<sub>y</sub> and ω physically required to hold a curve. Curvature-aware feedforward steering needed.</div>
+                </div>
+            </div>
+            <div class="scenario-card" onclick="openLightbox('intersection.png')">
+                <img class="scenario-img" src="intersection.png" alt="Intersection scenario">
+                <div class="scenario-body">
+                    <div class="scenario-title">4-Way Intersection <span class="scenario-badge badge-fail">failed</span></div>
+                    <div class="scenario-desc">Cross-traffic from multiple directions. Behavior planner issued abrupt lane-change commands that the MPC could not execute feasibly, leading to collision. A dedicated intersection deceleration/yield mode is required.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sub-title reveal">success rate breakdown</div>
+        <table class="results-table reveal">
+            <thead>
+                <tr>
+                    <th># Obstacle Vehicles</th>
+                    <th>Trials</th>
+                    <th>Successes</th>
+                    <th>Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+                <tr><td>2</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+                <tr><td>3</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+                <tr><td>4</td><td>5</td><td>4</td><td class="rate-amber">80%</td></tr>
+                <tr><td>5</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+                <tr><td>6</td><td>5</td><td>5</td><td class="rate-green">100%</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout amber reveal">
+            <div class="callout-label">known limitation</div>
+            <div class="callout-text">The root failure mode across most hard scenarios is the same: the behavior planner can issue a reference that changes too abruptly for the MPC to track dynamically. Past a certain yaw velocity, the bicycle model simply doesn't have enough control authority to execute the planned maneuver. Hysteresis and cooldown timers help but don't fully resolve this — a more anticipatory planner or a unified planning-control formulation is the right long-term fix.</div>
+        </div>
+    </div>
+
+    <!-- TECH STACK -->
+    <div class="section">
+        <div class="section-label reveal">// 04 · tools & methods</div>
+        <div class="section-title reveal">Tech Stack</div>
+        <div class="tag-list reveal">
+            <span class="tag">Python</span>
+            <span class="tag">Drake</span>
+            <span class="tag">SNOPT</span>
+            <span class="tag">MathematicalProgram</span>
+            <span class="tag">Model Predictive Control</span>
+            <span class="tag">Bicycle Model</span>
+            <span class="tag">Linearization (Jacobian)</span>
+            <span class="tag">Quintic Splines</span>
+            <span class="tag">Finite-State Machine</span>
+            <span class="tag">Time-to-Collision</span>
+            <span class="tag">Noisy Perception</span>
+            <span class="tag">Receding Horizon</span>
+            <span class="tag">scipy</span>
+            <span class="tag">numpy</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        &lt;— <a href="../../index.html" style="color:var(--accent);text-decoration:none;">back to portfolio</a>
+    </div>
+
+</div>
+
+<script>
+    function openLightbox(src) {
+        document.getElementById('lb-img').src = src;
+        document.getElementById('lightbox').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach((el, i) => {
+        el.style.transitionDelay = `${(i % 4) * 60}ms`;
+        observer.observe(el);
+    });
+</script>
+</body>
+</html>

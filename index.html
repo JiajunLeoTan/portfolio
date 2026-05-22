@@ -395,6 +395,9 @@
             overflow: hidden;
             opacity: 0;
             transform: translateY(14px);
+            color: inherit;
+            text-decoration: none;
+            cursor: pointer;
         }
 
         .proj-card.visible {
@@ -853,7 +856,7 @@
                 <span class="proj-tag">Passive Crossover</span>
             </div>
         </div>
-        <div class="proj-card" onclick="window.location='projects/f1-airfoil/'" style="cursor:pointer;">
+        <a class="proj-card" href="projects/f1-airfoil/">
             <div class="proj-course">MEAM 5270</div>
             <div class="proj-title">F1 Airfoil Failure Analysis</div>
             <div class="proj-desc">CFD boundary conditions and airspeed/boundary-distance variable sweep on a COMSOL k-&omega; SST model of the 1969 Lotus 49B high-mounted rear wing. FEA stress-driven failure study on the wing-and-strut assembly explaining historical material failure under race loading. Supported a 5-level mesh convergence study (3.8K–670K elements) and NACA 0012 validation matching the published 16° stall angle.</div>
@@ -865,7 +868,7 @@
                 <span class="proj-tag">Mesh Convergence</span>
                 <span class="proj-tag">Failure Analysis</span>
             </div>
-        </div>
+        </a>
         <div class="proj-card" onclick="window.location='projects/robocart/'" style="cursor:pointer;">
             <div class="proj-course">MEAM 5100</div>
             <div class="proj-title">RoboCart Autonomous Vehicle</div>
@@ -882,7 +885,7 @@
 
     <!-- Robotics -->
     <div class="proj-panel" id="panel-robotics">
-        <div class="proj-card">
+        <div class="proj-card" onclick="window.location='projects/meam5200/'" style="cursor:pointer;">
             <div class="proj-course">MEAM 5200</div>
             <div class="proj-title">Franka Panda Block Stacking</div>
             <div class="proj-desc">Built the null-space inverse-kinematics solver and dynamic-block motion prediction for a Python/ROS manipulation pipeline that detects, picks, and stacks 4 static and 4 dynamic blocks on a Franka Panda arm using camera calibration and safe waypoint execution.</div>
