@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIO-Based Autonomous Quadcopter — MEAM 620</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg:#070a0f;--bg-surface:#0d1117;--bg-card:#0f1720;
+            --border:#1a2333;--border-hover:#2a3a50;
+            --accent:#00c896;--accent-blue:#4a9eff;--accent-amber:#f0a830;
+            --accent-purple:#c084fc;--accent-red:#ff6b6b;
+            --accent-dim:rgba(0,200,150,0.10);
+            --text:#dde6f0;--text-muted:#7a8fa8;--text-dim:#3d4f63;
+            --mono:'JetBrains Mono',monospace;--sans:'Sora',sans-serif;
+        }
+        html{scroll-behavior:smooth}
+        body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.7;overflow-x:hidden}
+        body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,150,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,150,.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+        /* NAV */
+        nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(7,10,15,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+        .nav-back{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--text-muted);text-decoration:none;transition:color .2s}
+        .nav-back:hover{color:var(--accent)}
+        .nav-back svg{width:16px;height:16px}
+        .nav-title{font-family:var(--mono);font-size:12px;color:var(--text-dim);letter-spacing:.06em}
+        .nav-tag{font-family:var(--mono);font-size:11px;color:var(--accent-purple);background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.25);padding:3px 10px;border-radius:20px}
+
+        /* LAYOUT */
+        .page-wrap{max-width:1100px;margin:0 auto;padding:0 40px;position:relative;z-index:1}
+
+        /* HERO */
+        .hero{padding:120px 0 80px;border-bottom:1px solid var(--border)}
+        .hero-eyebrow{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
+        .hero-title{font-size:clamp(34px,5vw,56px);font-weight:600;line-height:1.1;letter-spacing:-.02em;margin-bottom:24px}
+        .hero-sub{font-size:17px;color:var(--text-muted);max-width:700px;line-height:1.7;margin-bottom:40px}
+        .hero-meta{display:flex;gap:32px;flex-wrap:wrap}
+        .meta-item{display:flex;flex-direction:column;gap:4px}
+        .meta-label{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+        .meta-val{font-family:var(--mono);font-size:13px;color:var(--text)}
+        .meta-val.green{color:var(--accent)}.meta-val.purple{color:var(--accent-purple)}.meta-val.amber{color:var(--accent-amber)}
+
+        /* SECTION */
+        .section{padding:72px 0;border-bottom:1px solid var(--border)}
+        .section-label{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+        .section-title{font-size:28px;font-weight:600;letter-spacing:-.02em;margin-bottom:32px}
+        .section-body{font-size:15px;color:var(--text-muted);max-width:760px;line-height:1.8}
+        .section-body p+p{margin-top:16px}
+
+        /* PIPELINE */
+        .pipeline{display:flex;flex-direction:column;gap:0;margin-top:40px;position:relative}
+        .pipeline::before{content:'';position:absolute;left:23px;top:32px;bottom:32px;width:2px;background:linear-gradient(to bottom,var(--accent-purple),var(--accent-blue),var(--accent),var(--accent-amber));border-radius:2px}
+        .pipe-step{display:flex;gap:20px;align-items:flex-start;padding-bottom:8px}
+        .pipe-num{width:48px;height:48px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;border:2px solid;z-index:1;background:var(--bg)}
+        .pipe-num.purple{color:var(--accent-purple);border-color:var(--accent-purple);box-shadow:0 0 0 4px rgba(192,132,252,.1)}
+        .pipe-num.blue{color:var(--accent-blue);border-color:var(--accent-blue);box-shadow:0 0 0 4px rgba(74,158,255,.1)}
+        .pipe-num.green{color:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px rgba(0,200,150,.1)}
+        .pipe-num.amber{color:var(--accent-amber);border-color:var(--accent-amber);box-shadow:0 0 0 4px rgba(240,168,48,.1)}
+        .pipe-card{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:8px;transition:border-color .2s}
+        .pipe-card:hover{border-color:var(--border-hover)}
+        .pipe-title{font-size:14px;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:10px}
+        .pipe-file{font-family:var(--mono);font-size:11px;color:var(--text-dim)}
+        .pipe-desc{font-size:13px;color:var(--text-muted);line-height:1.65}
+        .pipe-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+        .pipe-tag{font-family:var(--mono);font-size:10px;color:var(--text-dim);border:1px solid var(--border);border-radius:3px;padding:2px 7px}
+
+        /* SPEC GRID */
+        .spec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:32px}
+        .spec-row{display:flex;flex-direction:column;gap:4px;padding:16px 20px;background:var(--bg-card)}
+        .spec-key{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+        .spec-val{font-family:var(--mono);font-size:13px;color:var(--text)}
+
+        /* RESULTS TABLE */
+        .results-wrap{overflow-x:auto;margin-top:32px}
+        .results-table{width:100%;border-collapse:collapse;font-size:13px;font-family:var(--mono)}
+        .results-table th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg-surface)}
+        .results-table td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text-muted)}
+        .results-table tr:last-child td{border-bottom:none}
+        .results-table tr:hover td{background:var(--bg-card)}
+        .results-table .map-name{color:var(--text);font-weight:500}
+        .pass{color:var(--accent)}.collision{color:var(--accent-amber)}.timeout{color:var(--text-dim)}.dash{color:var(--text-dim)}
+
+        /* GALLERY */
+        .gallery-grid{display:grid;gap:12px}
+        .gallery-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+        .gallery-grid.cols-2{grid-template-columns:1fr 1fr}
+        .gallery-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s}
+        .gallery-item:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+        .gallery-item img{width:100%;height:220px;object-fit:contain;background:#0a0e16;display:block;padding:8px}
+        .gallery-item img.wide{height:260px}
+        .gallery-caption{padding:10px 14px 12px;font-family:var(--mono);font-size:11px;color:var(--text-muted);border-top:1px solid var(--border)}
+        .gallery-caption strong{color:var(--text);display:block;margin-bottom:2px;font-size:12px}
+
+        /* CALLOUT */
+        .callout{background:rgba(0,200,150,.05);border:1px solid rgba(0,200,150,.2);border-radius:8px;padding:20px 24px;margin-top:28px}
+        .callout.amber{background:rgba(240,168,48,.05);border-color:rgba(240,168,48,.2)}
+        .callout.purple{background:rgba(192,132,252,.05);border-color:rgba(192,132,252,.2)}
+        .callout-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+        .callout.amber .callout-label{color:var(--accent-amber)}
+        .callout.purple .callout-label{color:var(--accent-purple)}
+        .callout-text{font-size:14px;color:var(--text-muted);line-height:1.7}
+
+        /* SUB */
+        .sub-title{font-family:var(--mono);font-size:13px;color:var(--accent-blue);letter-spacing:.06em;margin:44px 0 20px;display:flex;align-items:center;gap:10px}
+        .sub-title::after{content:'';flex:1;height:1px;background:var(--border)}
+        .sub-title:first-child{margin-top:0}
+
+        /* EC BADGE */
+        .ec-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--accent-purple);background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.25);padding:3px 10px;border-radius:12px;margin-left:8px}
+
+        /* TAGS */
+        .tag-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+        .tag{font-family:var(--mono);font-size:12px;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;padding:5px 12px;background:var(--bg-card);transition:border-color .2s,color .2s}
+        .tag:hover{border-color:var(--accent);color:var(--accent)}
+
+        /* LIGHTBOX */
+        .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;align-items:center;justify-content:center;cursor:pointer}
+        .lightbox.open{display:flex}
+        .lightbox img{max-width:92vw;max-height:88vh;object-fit:contain;border:1px solid var(--border);border-radius:6px}
+        .lb-close{position:fixed;top:24px;right:28px;font-family:var(--mono);font-size:22px;color:var(--text-muted);cursor:pointer}
+
+        /* REVEAL */
+        .reveal{opacity:0;transform:translateY(24px);transition:opacity .5s ease,transform .5s ease}
+        .reveal.visible{opacity:1;transform:none}
+
+        .footer{padding:48px 0;text-align:center;font-family:var(--mono);font-size:12px;color:var(--text-dim)}
+
+        @media(max-width:700px){
+            nav{padding:0 20px}.page-wrap{padding:0 20px}.hero{padding:100px 0 60px}
+            .gallery-grid.cols-3,.gallery-grid.cols-2{grid-template-columns:1fr}
+            .pipeline::before{left:19px}.pipe-num{width:40px;height:40px;font-size:11px}
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-back" href="../../index.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3L5 8l5 5"/></svg>
+        back to portfolio
+    </a>
+    <span class="nav-title">// robotics & control</span>
+    <span class="nav-tag">VIO · ESKF · SE(3) · A*</span>
+</nav>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lb-close">✕</span>
+    <img id="lb-img" src="" alt="">
+</div>
+
+<div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow reveal">Penn MEAM 620 · Robotics: Perception, Planning, and Control</div>
+        <h1 class="hero-title reveal">VIO-Based Autonomous<br>Quadcopter</h1>
+        <p class="hero-sub reveal">A complete GPS-denied autonomy stack — integrating an error-state Kalman filter for visual-inertial odometry, A* graph search on a 3D occupancy grid, quintic minimum-jerk trajectory generation, and an SE(3) geometric controller — all running in closed loop with estimated state instead of ground truth. Extra credit adds online local replanning with a 3.5 m sensor horizon.</p>
+        <div class="hero-meta reveal">
+            <div class="meta-item"><span class="meta-label">State Estimator</span><span class="meta-val">18-state ESKF (VIO)</span></div>
+            <div class="meta-item"><span class="meta-label">Planner</span><span class="meta-val">A* + min-jerk spline</span></div>
+            <div class="meta-item"><span class="meta-label">Controller</span><span class="meta-val">SE(3) geometric PD</span></div>
+            <div class="meta-item"><span class="meta-label">Normal maps</span><span class="meta-val green">6 / 6 passed</span></div>
+            <div class="meta-item"><span class="meta-label">EC (local replan)</span><span class="meta-val purple">3 / 6 clean</span></div>
+        </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="section">
+        <div class="section-label reveal">// 01 · overview</div>
+        <div class="section-title reveal">What Makes This Hard</div>
+        <div class="section-body reveal">
+            <p>Projects 1 and 2 solved halves of autonomous flight in isolation: planning and control with ground-truth state, and state estimation without full autonomy. Project 3 closes the loop — the controller now receives VIO estimates instead of truth, and every component interacts. A trajectory that is feasible under perfect feedback can fail under estimation drift, and aggressive accelerations worsen the very estimation errors they depend on.</p>
+            <p>The key design choice throughout was to prioritize stability over speed: conservative controller gains, iterative time-stretching on generated trajectories, and a 1.35× time scale factor for the EC local planner. This sacrifices raw competition time in exchange for the estimator staying coherent through the full flight.</p>
+        </div>
+        <div class="spec-grid reveal">
+            <div class="spec-row"><span class="spec-key">Error state dim</span><span class="spec-val">18 (Δp, Δv, Δθ, Δa_b, Δω_b, Δg)</span></div>
+            <div class="spec-row"><span class="spec-key">Occupancy grid res</span><span class="spec-val">0.15 × 0.15 × 0.15 m</span></div>
+            <div class="spec-row"><span class="spec-key">A* connectivity</span><span class="spec-val">26-connected neighbors</span></div>
+            <div class="spec-row"><span class="spec-key">Trajectory type</span><span class="spec-val">Quintic minimum-jerk</span></div>
+            <div class="spec-row"><span class="spec-key">A* margin trials</span><span class="spec-val">0.40 → 0.35 → 0.30 → 0.25 m</span></div>
+            <div class="spec-row"><span class="spec-key">EC sensor range</span><span class="spec-val">3.5 m local horizon</span></div>
+            <div class="spec-row"><span class="spec-key">EC replan interval</span><span class="spec-val">0.2 s</span></div>
+            <div class="spec-row"><span class="spec-key">EC time scaling</span><span class="spec-val">1.35× (stability margin)</span></div>
+        </div>
+    </div>
+
+    <!-- AUTONOMY PIPELINE -->
+    <div class="section">
+        <div class="section-label reveal">// 02 · system architecture</div>
+        <div class="section-title reveal">Full Autonomy Stack</div>
+        <div class="section-body reveal">
+            <p>Eight steps, running in a closed loop at sensor rate. The pipeline is the same in both normal and EC modes — the EC version adds a replanning check and local goal selection between steps 2 and 6.</p>
+        </div>
+
+        <div class="pipeline reveal">
+            <div class="pipe-step">
+                <div class="pipe-num purple">1</div>
+                <div class="pipe-card">
+                    <div class="pipe-title">VIO State Estimation <span class="pipe-file">vio.py</span></div>
+                    <div class="pipe-desc">Error-State Kalman Filter with a 18-dimensional error state. <strong>IMU propagation</strong>: integrates measured acceleration and angular velocity to update position, velocity, and quaternion attitude, while propagating the 18×18 error covariance via the linearized process Jacobian F<sub>x</sub> with additive noise Q<sub>i</sub>. <strong>Visual updates</strong>: each observed feature landmark generates a 2D projection innovation; outliers above the threshold are rejected; Kalman gain K applies a Joseph-form update to the covariance and corrects all 18 error states including accelerometer bias, gyro bias, and gravity vector.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">ESKF</span><span class="pipe-tag">IMU propagation</span><span class="pipe-tag">stereo feature updates</span><span class="pipe-tag">outlier rejection</span><span class="pipe-tag">Joseph form</span><span class="pipe-tag">bias estimation</span></div>
+                </div>
+            </div>
+            <div class="pipe-step">
+                <div class="pipe-num purple">2</div>
+                <div class="pipe-card">
+                    <div class="pipe-title">Occupancy Map Update <span class="pipe-file">occupancy_map.py</span></div>
+                    <div class="pipe-desc">Voxel grid inflated by the collision margin. In EC mode, the map is rebuilt around the current estimated position at each replan — only the local 3.5 m region is considered free space, forcing the planner to discover the environment incrementally.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">0.15 m voxels</span><span class="pipe-tag">inflation margin</span><span class="pipe-tag">EC: local update</span></div>
+                </div>
+            </div>
+            <div class="pipe-step">
+                <div class="pipe-num blue">3</div>
+                <div class="pipe-card">
+                    <div class="pipe-title">A* Graph Search <span class="pipe-file">graph_search.py</span></div>
+                    <div class="pipe-desc">26-connected search on the voxel grid with metric Euclidean edge costs. Heuristic uses the exact goal position rather than the goal voxel center for a tighter admissible estimate and better tie-breaking. Tries four decreasing collision margins (0.40→0.25 m) before falling back to a straight-line path. Deadline-abort mechanism prevents search from blocking the simulator on large worlds.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">A*</span><span class="pipe-tag">26-connected</span><span class="pipe-tag">Euclidean heuristic</span><span class="pipe-tag">adaptive margin</span><span class="pipe-tag">deadline abort</span></div>
+                </div>
+            </div>
+            <div class="pipe-step">
+                <div class="pipe-num blue">4</div>
+                <div class="pipe-card">
+                    <div class="pipe-title">Waypoint Pruning + Local Goal Selection <span class="pipe-file">world_traj.py</span></div>
+                    <div class="pipe-desc">Greedy line-of-sight pruning removes redundant waypoints while respecting clearance. In EC mode, a local goal is picked at the furthest reachable point along the straight line to the global goal within the sensor horizon — switching to the global goal directly once it falls within range.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">greedy pruning</span><span class="pipe-tag">LOS clearance</span><span class="pipe-tag">EC: local goal</span><span class="pipe-tag">3.5 m horizon</span></div>
+                </div>
+            </div>
+            <div class="pipe-step">
+                <div class="pipe-num green">5</div>
+                <div class="pipe-card">
+                    <div class="pipe-title">Minimum-Jerk Trajectory Generation <span class="pipe-file">world_traj.py</span></div>
+                    <div class="pipe-desc">Piecewise quintic polynomials through pruned waypoints. Segment durations are initialized from distance-based rules, increased proportionally at turns, and iteratively stretched whenever sampled velocity, horizontal acceleration, thrust, or vertical acceleration exceed conservative limits. Scenario-adaptive speed profiles (vertical, long horizontal, switchback) tune the limits based on path geometry. In EC mode, each local segment is shifted into absolute simulator time before installation and includes a hover tail so the trajectory remains valid during replanning.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">quintic spline</span><span class="pipe-tag">min-jerk</span><span class="pipe-tag">iterative time stretch</span><span class="pipe-tag">scenario profiles</span><span class="pipe-tag">EC: absolute time</span><span class="pipe-tag">hover tail</span></div>
+                </div>
+            </div>
+            <div class="pipe-step">
+                <div class="pipe-num amber">6</div>
+                <div class="pipe-card">
+                    <div class="pipe-title">SE(3) Geometric Controller <span class="pipe-file">se3_control.py</span></div>
+                    <div class="pipe-desc"><strong>Outer loop</strong> (position PD): computes desired acceleration from position/velocity errors with feed-forward, then projects the desired force onto the current body z-axis for thrust. <strong>Inner loop</strong> (attitude PD on Euler angles): tracks roll, pitch, and yaw errors with feed-forward yaw rate. Motor speeds computed through the 4×4 thrust/drag mixing matrix with rotor-speed saturation. Gains tuned to be strong enough for goal completion but not so aggressive that VIO errors amplify into unstable tracking.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">Kp=[5.5,5.5,12]</span><span class="pipe-tag">Kd=[4,4,8]</span><span class="pipe-tag">KR=[1800,1800,120]</span><span class="pipe-tag">Kω=[180,180,40]</span><span class="pipe-tag">mixing matrix</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="section">
+        <div class="section-label reveal">// 03 · results</div>
+        <div class="section-title reveal">Autograder Results — 6 Maps</div>
+        <div class="section-body reveal">
+            <p>The standard planner passed all 6 maps cleanly. The EC local replanner passed 3 maps safely — the same 3 where the full-world planner produced relatively short, open paths. Slalom reached the goal but the true flight path grazed an obstacle. Stairwell and switchback timed out — conservative 1.35× timing adds overhead that accumulates over long, constrained routes.</p>
+        </div>
+
+        <div class="results-wrap reveal">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Map</th>
+                        <th>Normal time (s)</th>
+                        <th>Normal dist (m)</th>
+                        <th>Normal</th>
+                        <th>EC time (s)</th>
+                        <th>EC dist (m)</th>
+                        <th>EC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td class="map-name">maze</td><td>9.08</td><td>22.31</td><td class="pass">pass</td><td>12.39</td><td>11.98</td><td class="pass">pass</td></tr>
+                    <tr><td class="map-name">over-under</td><td>10.64</td><td>31.97</td><td class="pass">pass</td><td>31.10</td><td>29.77</td><td class="pass">pass</td></tr>
+                    <tr><td class="map-name">window</td><td>6.49</td><td>25.00</td><td class="pass">pass</td><td>23.77</td><td>25.66</td><td class="pass">pass</td></tr>
+                    <tr><td class="map-name">slalom</td><td>19.54</td><td>54.83</td><td class="pass">pass</td><td>42.50</td><td>54.39</td><td class="collision">collision</td></tr>
+                    <tr><td class="map-name">stairwell</td><td>14.79</td><td>35.20</td><td class="pass">pass</td><td class="dash">—</td><td class="dash">—</td><td class="timeout">timeout</td></tr>
+                    <tr><td class="map-name">switchback</td><td>15.35</td><td>71.48</td><td class="pass">pass</td><td class="dash">—</td><td class="dash">—</td><td class="timeout">timeout</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout amber reveal">
+            <div class="callout-label">EC failure analysis</div>
+            <div class="callout-text">Slalom collided because straight-line local goal selection chose subgoals misaligned with the narrow corridor — the planner reached the goal but the true flight path cut a corner. Stairwell and switchback timed out because repeated A* calls and 1.35× timing compound over long constrained paths. The fix is corridor-aware local goal selection (frontier-based or via a visibility graph) rather than simple projection toward the global goal.</div>
+        </div>
+
+        <div class="sub-title reveal">trajectory plots — standard planner</div>
+        <div class="gallery-grid cols-3 reveal">
+            <div class="gallery-item" onclick="openLightbox('result-maze.png')">
+                <img src="result-maze.png" alt="Maze trajectory">
+                <div class="gallery-caption"><strong>Maze</strong>9.08 s · 22.31 m · no collision</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('result-over-under.png')">
+                <img src="result-over-under.png" alt="Over-under trajectory">
+                <div class="gallery-caption"><strong>Over-Under</strong>10.64 s · 31.97 m · no collision</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('result-window.png')">
+                <img src="result-window.png" alt="Window trajectory">
+                <div class="gallery-caption"><strong>Window</strong>6.49 s · 25.00 m · no collision</div>
+            </div>
+        </div>
+
+        <div class="sub-title reveal">EC local replanner — window map comparison</div>
+        <div class="gallery-grid cols-2 reveal">
+            <div class="gallery-item" onclick="openLightbox('result-window-ec.png')">
+                <img src="result-window-ec.png" alt="EC window trajectory">
+                <div class="gallery-caption"><strong>EC: Window (local replanning)</strong>23.77 s · 25.66 m · segmented path</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('vio-comparison.png')">
+                <img class="wide" src="vio-comparison.png" alt="VIO tracking comparison">
+                <div class="gallery-caption"><strong>VIO Tracking: Normal vs EC (window map)</strong>Distance to goal + tracking error over time</div>
+            </div>
+        </div>
+
+        <div class="callout purple reveal">
+            <div class="callout-label">what the comparison shows</div>
+            <div class="callout-text">The normal planner reaches the goal in 6.5 s with tracking error under 0.2 m throughout. The EC planner takes 23.8 s and shows the characteristic step-like distance-to-goal convergence of repeated short-horizon replanning — each segment completes, the quadrotor briefly holds position, and the next local target brings it closer. Tracking error under EC is higher (up to ~0.35 m) but stays bounded, confirming the 1.35× timing was conservative enough to keep VIO stable.</div>
+        </div>
+    </div>
+
+    <!-- LESSONS -->
+    <div class="section">
+        <div class="section-label reveal">// 04 · lessons learned</div>
+        <div class="section-title reveal">Key Engineering Insights</div>
+        <div class="section-body reveal">
+            <p><strong style="color:var(--text)">Estimation, planning, and control are coupled.</strong> A trajectory that looks geometrically valid can still fail because aggressive acceleration worsens VIO drift, which worsens tracking error, which causes the quadrotor to clip obstacles the planner had cleared. The right level of aggression depends on the estimator's noise tolerance, not just the dynamics.</p>
+            <p><strong style="color:var(--text)">Absolute time is non-negotiable for local replanning.</strong> The simulator queries the trajectory with absolute simulation time. Each new local segment is naturally generated in relative time. Forgetting to shift segments caused the simulator to interpret local subgoal endpoints as the mission endpoint and terminate early — a silent correctness bug that looked like a success.</p>
+            <p><strong style="color:var(--text)">State continuity across replan boundaries is unsolved.</strong> Replanning from a nonzero-velocity state can produce zig-zagging if the new polynomial is initialized inconsistently. Passing current velocity into the new segment and enforcing a minimum first-segment time helps, but the right solution is to blend segments before the active one ends, preserving velocity continuity at the seam.</p>
+        </div>
+    </div>
+
+    <!-- TECH STACK -->
+    <div class="section">
+        <div class="section-label reveal">// 05 · tools & methods</div>
+        <div class="section-title reveal">Tech Stack</div>
+        <div class="tag-list reveal">
+            <span class="tag">Python</span>
+            <span class="tag">NumPy / SciPy</span>
+            <span class="tag">Error-State Kalman Filter</span>
+            <span class="tag">Visual-Inertial Odometry</span>
+            <span class="tag">IMU Integration</span>
+            <span class="tag">Stereo Feature Updates</span>
+            <span class="tag">A* Search</span>
+            <span class="tag">3D Occupancy Grid</span>
+            <span class="tag">Quintic Min-Jerk</span>
+            <span class="tag">SE(3) Control</span>
+            <span class="tag">Motor Mixing Matrix</span>
+            <span class="tag">Local Replanning</span>
+            <span class="tag">Absolute-Time Trajectories</span>
+            <span class="tag">Quaternion Algebra</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        &lt;— <a href="../../index.html" style="color:var(--accent);text-decoration:none;">back to portfolio</a>
+    </div>
+
+</div>
+
+<script>
+    function openLightbox(src){document.getElementById('lb-img').src=src;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden'}
+    function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow=''}
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()})
+    const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.08,rootMargin:'0px 0px -40px 0px'})
+    document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=`${(i%4)*60}ms`;obs.observe(el)})
+</script>
+</body>
+</html>
