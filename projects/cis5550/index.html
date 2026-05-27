@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACLN Search Engine — CIS 5550</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg:#070a0f;--bg-surface:#0d1117;--bg-card:#0f1720;
+            --border:#1a2333;--border-hover:#2a3a50;
+            --accent:#00c896;--accent-blue:#4a9eff;--accent-amber:#f0a830;
+            --accent-purple:#c084fc;--accent-red:#ff6b6b;
+            --accent-dim:rgba(0,200,150,.10);
+            --text:#dde6f0;--text-muted:#7a8fa8;--text-dim:#3d4f63;
+            --mono:'JetBrains Mono',monospace;--sans:'Sora',sans-serif;
+        }
+        html{scroll-behavior:smooth}
+        body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.7;overflow-x:hidden}
+        body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,150,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,150,.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+        nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(7,10,15,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+        .nav-back{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--text-muted);text-decoration:none;transition:color .2s}
+        .nav-back:hover{color:var(--accent)}
+        .nav-back svg{width:16px;height:16px}
+        .nav-title{font-family:var(--mono);font-size:12px;color:var(--text-dim);letter-spacing:.06em}
+        .nav-tag{font-family:var(--mono);font-size:11px;color:var(--accent-blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.25);padding:3px 10px;border-radius:20px}
+
+        .page-wrap{max-width:1100px;margin:0 auto;padding:0 40px;position:relative;z-index:1}
+
+        /* HERO */
+        .hero{padding:120px 0 80px;border-bottom:1px solid var(--border)}
+        .hero-eyebrow{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
+        .hero-title{font-size:clamp(36px,5vw,60px);font-weight:600;line-height:1.1;letter-spacing:-.02em;margin-bottom:24px}
+        .hero-sub{font-size:17px;color:var(--text-muted);max-width:700px;line-height:1.7;margin-bottom:40px}
+        .hero-meta{display:flex;gap:32px;flex-wrap:wrap}
+        .meta-item{display:flex;flex-direction:column;gap:4px}
+        .meta-label{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+        .meta-val{font-family:var(--mono);font-size:13px;color:var(--text)}
+        .meta-val.green{color:var(--accent)}.meta-val.blue{color:var(--accent-blue)}.meta-val.amber{color:var(--accent-amber)}
+
+        /* SECTION */
+        .section{padding:72px 0;border-bottom:1px solid var(--border)}
+        .section-label{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+        .section-title{font-size:28px;font-weight:600;letter-spacing:-.02em;margin-bottom:32px}
+        .section-body{font-size:15px;color:var(--text-muted);max-width:760px;line-height:1.8}
+        .section-body p+p{margin-top:16px}
+
+        /* PIPELINE */
+        .pipeline{display:flex;flex-direction:column;gap:0;margin-top:40px;position:relative}
+        .pipeline::before{content:'';position:absolute;left:23px;top:32px;bottom:32px;width:2px;background:linear-gradient(to bottom,var(--accent-blue),var(--accent),var(--accent-amber),var(--accent-purple));border-radius:2px}
+        .pipe-step{display:flex;gap:20px;align-items:flex-start;padding-bottom:8px}
+        .pipe-num{width:48px;height:48px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;border:2px solid;z-index:1;background:var(--bg)}
+        .pipe-num.blue{color:var(--accent-blue);border-color:var(--accent-blue);box-shadow:0 0 0 4px rgba(74,158,255,.1)}
+        .pipe-num.green{color:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px rgba(0,200,150,.1)}
+        .pipe-num.amber{color:var(--accent-amber);border-color:var(--accent-amber);box-shadow:0 0 0 4px rgba(240,168,48,.1)}
+        .pipe-num.purple{color:var(--accent-purple);border-color:var(--accent-purple);box-shadow:0 0 0 4px rgba(192,132,252,.1)}
+        .pipe-num.dim{color:var(--text-dim);border-color:var(--text-dim)}
+        .pipe-card{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:8px;transition:border-color .2s}
+        .pipe-card:hover{border-color:var(--border-hover)}
+        .pipe-card.mine{border-color:rgba(0,200,150,.2)}
+        .pipe-title{font-size:14px;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+        .pipe-file{font-family:var(--mono);font-size:11px;color:var(--text-dim)}
+        .owned-badge{font-family:var(--mono);font-size:10px;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(0,200,150,.25);padding:2px 8px;border-radius:10px}
+        .pipe-desc{font-size:13px;color:var(--text-muted);line-height:1.65}
+        .pipe-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+        .pipe-tag{font-family:var(--mono);font-size:10px;color:var(--text-dim);border:1px solid var(--border);border-radius:3px;padding:2px 7px}
+
+        /* KVS TABLES */
+        .table-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:28px}
+        .table-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px 20px}
+        .table-name{font-family:var(--mono);font-size:13px;color:var(--accent-blue);font-weight:500;margin-bottom:4px}
+        .table-desc{font-size:13px;color:var(--text-muted);line-height:1.55}
+
+        /* RANKING */
+        .eq-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:22px 28px;margin-top:28px}
+        .eq-label{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+        .eq-body{font-family:var(--mono);font-size:13px;color:var(--text);line-height:2.2}
+        .eq-body .hl{color:var(--accent)}
+        .eq-body .hl2{color:var(--accent-blue)}
+        .eq-body .hl3{color:var(--accent-amber)}
+
+        /* CRAWL PROGRESS */
+        .crawl-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:28px}
+        .crawl-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px;position:relative;overflow:hidden}
+        .crawl-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+        .crawl-card.r1::before{background:var(--text-dim)}
+        .crawl-card.r2::before{background:var(--accent-blue)}
+        .crawl-card.r3::before{background:var(--accent)}
+        .crawl-run{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+        .crawl-stat{font-family:var(--mono);font-size:28px;font-weight:700;line-height:1;margin-bottom:4px}
+        .crawl-stat.r1{color:var(--text-dim)}.crawl-stat.r2{color:var(--accent-blue)}.crawl-stat.r3{color:var(--accent)}
+        .crawl-sub{font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-bottom:10px}
+        .crawl-note{font-size:12px;color:var(--text-dim);line-height:1.5}
+
+        /* INTENT GRID */
+        .intent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:24px}
+        .intent-chip{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+        .intent-icon{font-family:var(--mono);font-size:10px;color:var(--text-dim);width:20px;text-align:center}
+        .intent-name{font-family:var(--mono);font-size:12px;color:var(--text-muted)}
+
+        /* GALLERY */
+        .gallery-grid{display:grid;gap:12px}
+        .gallery-grid.cols-2{grid-template-columns:1fr 1fr}
+        .gallery-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+        .gallery-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s}
+        .gallery-item:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+        .gallery-item img{width:100%;height:240px;object-fit:cover;object-position:top;display:block}
+        .gallery-item img.tall{height:300px}
+        .gallery-caption{padding:10px 14px 12px;font-family:var(--mono);font-size:11px;color:var(--text-muted);border-top:1px solid var(--border)}
+        .gallery-caption strong{color:var(--text);display:block;margin-bottom:2px;font-size:12px}
+
+        /* CALLOUT */
+        .callout{background:rgba(0,200,150,.05);border:1px solid rgba(0,200,150,.2);border-radius:8px;padding:20px 24px;margin-top:28px}
+        .callout.blue{background:rgba(74,158,255,.05);border-color:rgba(74,158,255,.2)}
+        .callout-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+        .callout.blue .callout-label{color:var(--accent-blue)}
+        .callout-text{font-size:14px;color:var(--text-muted);line-height:1.7}
+
+        /* SUB */
+        .sub-title{font-family:var(--mono);font-size:13px;color:var(--accent-blue);letter-spacing:.06em;margin:44px 0 20px;display:flex;align-items:center;gap:10px}
+        .sub-title::after{content:'';flex:1;height:1px;background:var(--border)}
+        .sub-title:first-child{margin-top:0}
+
+        /* TAGS */
+        .tag-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+        .tag{font-family:var(--mono);font-size:12px;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;padding:5px 12px;background:var(--bg-card);transition:border-color .2s,color .2s}
+        .tag:hover{border-color:var(--accent);color:var(--accent)}
+
+        /* LIGHTBOX */
+        .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;align-items:center;justify-content:center;cursor:pointer}
+        .lightbox.open{display:flex}
+        .lightbox img{max-width:92vw;max-height:88vh;object-fit:contain;border:1px solid var(--border);border-radius:6px}
+        .lb-close{position:fixed;top:24px;right:28px;font-family:var(--mono);font-size:22px;color:var(--text-muted);cursor:pointer}
+
+        .reveal{opacity:0;transform:translateY(24px);transition:opacity .5s ease,transform .5s ease}
+        .reveal.visible{opacity:1;transform:none}
+
+        .footer{padding:48px 0;text-align:center;font-family:var(--mono);font-size:12px;color:var(--text-dim)}
+
+        @media(max-width:700px){
+            nav{padding:0 20px}.page-wrap{padding:0 20px}.hero{padding:100px 0 60px}
+            .crawl-grid,.gallery-grid.cols-2,.gallery-grid.cols-3{grid-template-columns:1fr}
+            .pipeline::before{left:19px}.pipe-num{width:40px;height:40px;font-size:11px}
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-back" href="../../index.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3L5 8l5 5"/></svg>
+        back to portfolio
+    </a>
+    <span class="nav-title">// distributed systems</span>
+    <span class="nav-tag">KVS · Flame · EC2</span>
+</nav>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lb-close">✕</span>
+    <img id="lb-img" src="" alt="">
+</div>
+
+<div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow reveal">Penn CIS 5550 · Internet and Web Systems</div>
+        <h1 class="hero-title reveal">ACLN Search Engine</h1>
+        <p class="hero-sub reveal">A cloud-deployable mini web search engine built end-to-end on a distributed KVS + Flame stack — robots-aware crawler, iterative PageRank, TF-IDF inverted index, and a custom HTTP server with ranked search, PDF ingestion, spellcheck, search suggestions, and 9-category query intent detection. Deployed on Amazon EC2, crawling 100–150K pages in under 9 hours.</p>
+        <div class="hero-meta reveal">
+            <div class="meta-item"><span class="meta-label">Infrastructure</span><span class="meta-val">KVS + Flame (distributed)</span></div>
+            <div class="meta-item"><span class="meta-label">Deployment</span><span class="meta-val">Amazon EC2</span></div>
+            <div class="meta-item"><span class="meta-label">Corpus (final)</span><span class="meta-val green">100–150K pages</span></div>
+            <div class="meta-item"><span class="meta-label">Crawl time</span><span class="meta-val green">~9 hours</span></div>
+            <div class="meta-item"><span class="meta-label">Ranking</span><span class="meta-val blue">TF-IDF + PageRank</span></div>
+        </div>
+    </div>
+
+    <!-- ARCHITECTURE -->
+    <div class="section">
+        <div class="section-label reveal">// 01 · system design</div>
+        <div class="section-title reveal">End-to-End Pipeline</div>
+        <div class="section-body reveal">
+            <p>Four components, each running as an independent process or Flame job, connected entirely through KVS tables — no direct inter-component communication. The clean separation means batch jobs (crawler, PageRank, indexer) can be re-run or restarted independently without corrupting the others, and the webserver issues only KVS lookups at query time with no batch computation in the serving path.</p>
+        </div>
+
+        <div class="pipeline reveal">
+
+            <div class="pipe-step">
+                <div class="pipe-num dim">0</div>
+                <div class="pipe-card">
+                    <div class="pipe-title">KVS + Flame <span class="pipe-file">kvs/ · flame/</span></div>
+                    <div class="pipe-desc">Course-provided distributed substrate. KVS workers shard tables by consistent key partitioning with durable disk storage. Flame provides an RDD-style MapReduce API — jobs are submitted as JARs over HTTP to a Coordinator, distributed to Workers as tasks. All persistent project data lives in KVS; no local files between components.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">consistent partitioning</span><span class="pipe-tag">RDD API</span><span class="pipe-tag">JAR submission</span><span class="pipe-tag">Coordinator/Worker</span></div>
+                </div>
+            </div>
+
+            <div class="pipe-step">
+                <div class="pipe-num blue">1</div>
+                <div class="pipe-card mine">
+                    <div class="pipe-title">Crawler <span class="pipe-file">Crawler.java</span><span class="owned-badge">// leo</span></div>
+                    <div class="pipe-desc">Runs as a Flame job seeded from one or more URLs. Fetches pages via HTTP, respects <code style="font-family:var(--mono);font-size:12px">robots.txt</code> per host, and enforces per-domain politeness delays. Extracts and normalizes outbound links with <code style="font-family:var(--mono);font-size:12px">UrlUtils</code>, deduplicates content by hash in <code style="font-family:var(--mono);font-size:12px">contentSeen</code>, and stores page HTML, metadata, and a semicolon-separated outbound link list in <code style="font-family:var(--mono);font-size:12px">pt-crawl</code>. Supports configurable page limits, blacklist filtering, multiple seed URLs, and verbose progress logging. Tunable request timeout and per-host scheduling drove the 9-hour final crawl throughput.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">robots.txt</span><span class="pipe-tag">per-host politeness</span><span class="pipe-tag">content dedup</span><span class="pipe-tag">blacklist</span><span class="pipe-tag">URL normalization</span><span class="pipe-tag">pt-crawl</span></div>
+                </div>
+            </div>
+
+            <div class="pipe-step">
+                <div class="pipe-num green">2</div>
+                <div class="pipe-card mine">
+                    <div class="pipe-title">PageRank <span class="pipe-file">PageRank.java</span><span class="owned-badge">// leo</span></div>
+                    <div class="pipe-desc">Iterative Flame job over the link graph stored in <code style="font-family:var(--mono);font-size:12px">pt-crawl</code>. Consumes cleaned outbound-link data rather than re-parsing HTML, using hashed URLs as keys throughout. Explicitly emits <code style="font-family:var(--mono);font-size:12px">(targetHash, "")</code> for target-only nodes so all reachable pages receive PageRank mass. Handles dangling nodes with explicit mass redistribution: <code style="font-family:var(--mono);font-size:12px">base = (1−D)/N + D·danglingMass/N</code>. Convergence checked by joining old and new rank RDDs and computing max |new − old|. Intermediate RDDs aggressively destroyed each iteration to prevent KVS disk accumulation. Final scores streamed directly to <code style="font-family:var(--mono);font-size:12px">pt-pageranks</code> via <code style="font-family:var(--mono);font-size:12px">KVSClient.put()</code>.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">iterative convergence</span><span class="pipe-tag">dangling mass</span><span class="pipe-tag">URL hashing</span><span class="pipe-tag">RDD cleanup</span><span class="pipe-tag">pt-pageranks</span></div>
+                </div>
+            </div>
+
+            <div class="pipe-step">
+                <div class="pipe-num amber">3</div>
+                <div class="pipe-card mine">
+                    <div class="pipe-title">Indexer <span class="pipe-file">Indexer.java</span><span class="owned-badge">// leo</span></div>
+                    <div class="pipe-desc">Flame job that consumes <code style="font-family:var(--mono);font-size:12px">pt-crawl</code>, strips HTML with jsoup, enforces Latin-only token constraints, optionally applies Porter stemming, and optionally stores word positions for phrase queries. Produces three output tables: <code style="font-family:var(--mono);font-size:12px">pt-index</code> (token → posting list), <code style="font-family:var(--mono);font-size:12px">pt-termfreq</code> (token → docHash:tf per document), and <code style="font-family:var(--mono);font-size:12px">pt-docstats</code> (docHash → URL + token count). Column names hashed via <code style="font-family:var(--mono);font-size:12px">Hasher.hash(rowKey + "|" + value)</code> to avoid collisions. All outputs streamed directly to KVS; large intermediates destroyed eagerly to minimize disk footprint.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">inverted index</span><span class="pipe-tag">TF-IDF stats</span><span class="pipe-tag">positional indexing</span><span class="pipe-tag">Porter stemming</span><span class="pipe-tag">pt-index</span><span class="pipe-tag">pt-termfreq</span><span class="pipe-tag">pt-docstats</span></div>
+                </div>
+            </div>
+
+            <div class="pipe-step">
+                <div class="pipe-num purple">4</div>
+                <div class="pipe-card mine">
+                    <div class="pipe-title">Web Server + Search <span class="pipe-file">webserver/ · search.html</span><span class="owned-badge">// leo</span></div>
+                    <div class="pipe-desc">Custom HTTP server — thread pool, routing, sessions — entirely in-house to remain within course constraints. <code style="font-family:var(--mono);font-size:12px">SearchHandler</code> tokenizes queries, retrieves postings from <code style="font-family:var(--mono);font-size:12px">pt-termfreq</code>, document lengths from <code style="font-family:var(--mono);font-size:12px">pt-docstats</code>, and PageRank from <code style="font-family:var(--mono);font-size:12px">pt-pageranks</code> in parallel KVS lookups, computes normalized TF-IDF and PageRank, and blends them with URL/title boosts. Additional features: spellcheck (edit distance ≤2, 20K-entry scan), prefix-based search suggestions, 9-category query intent detection, and infinite scroll. <code style="font-family:var(--mono);font-size:12px">PdfUploadHandler</code> integrates Apache Tika to extract PDF text and inject it into <code style="font-family:var(--mono);font-size:12px">pt-crawl</code> with a synthetic <code style="font-family:var(--mono);font-size:12px">upload://</code> URL, making uploaded documents immediately searchable without re-running the batch indexer.</div>
+                    <div class="pipe-tags"><span class="pipe-tag">thread pool</span><span class="pipe-tag">TF-IDF + PageRank</span><span class="pipe-tag">spellcheck</span><span class="pipe-tag">suggestions</span><span class="pipe-tag">intent detection</span><span class="pipe-tag">PDF / Tika</span><span class="pipe-tag">infinite scroll</span></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="sub-title reveal">KVS table schema</div>
+        <div class="table-grid reveal">
+            <div class="table-card"><div class="table-name">pt-crawl</div><div class="table-desc">Per-URL rows. Columns: url, page (HTML), responseCode, contentType, outbound links (semicolon-delimited hashes), canonicalURL. Primary crawl corpus.</div></div>
+            <div class="table-card"><div class="table-name">pt-pageranks</div><div class="table-desc">Keyed by Hasher.hash(url). Column: rank (double). Output of the iterative PageRank Flame job.</div></div>
+            <div class="table-card"><div class="table-name">pt-index</div><div class="table-desc">Inverted index. Row key: token. Value: CSV of url entries (base) or url:positions (positional mode).</div></div>
+            <div class="table-card"><div class="table-name">pt-termfreq</div><div class="table-desc">Row key: token. Columns: docHash:tf pairs. Used by SearchHandler for per-document TF computation.</div></div>
+            <div class="table-card"><div class="table-name">pt-docstats</div><div class="table-desc">Row key: docHash. Value: url\x01length (tab-separated URL and token count). Provides document length for TF-IDF normalization.</div></div>
+            <div class="table-card"><div class="table-name">hosts / contentSeen</div><div class="table-desc">Crawler support tables. hosts: per-domain robots rules and last-access time. contentSeen: content hash deduplication across crawl workers.</div></div>
+        </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="section">
+        <div class="section-label reveal">// 02 · ranking</div>
+        <div class="section-title reveal">Scoring Formula</div>
+        <div class="section-body reveal">
+            <p>Two primary signals — TF-IDF content relevance and global PageRank importance — blended linearly, with small bounded bonuses when query terms appear in the URL or extracted title. Both signals are normalized per result set before blending, so neither dominates by scale.</p>
+        </div>
+        <div class="eq-card reveal">
+            <div class="eq-label">ranking formula</div>
+            <div class="eq-body">
+                <span class="hl">score(url, query)</span> = <span class="hl2">α · TFIDF<sub>norm</sub>(url, query)</span>  +  <span class="hl3">β · PageRank<sub>norm</sub>(url)</span><br>
+                <span style="color:var(--text-dim)">— where α = 0.7, β = 0.3 —</span><br><br>
+                <span class="hl2">tf</span> = 1 + log(raw term count) &nbsp;&nbsp; <span style="color:var(--text-dim)">// per query term, per document</span><br>
+                <span class="hl2">idf</span> = log((N + 1) / (df + 1)) + 1 &nbsp;&nbsp; <span style="color:var(--text-dim)">// N = total docs, df = docs containing term</span><br>
+                <span class="hl2">TF-IDF</span> = Σ(tf · idf) / doc_length &nbsp;&nbsp; <span style="color:var(--text-dim)">// summed over query terms, normalized</span><br>
+                <span class="hl3">PageRank</span> = pt-pageranks[hash(url)] / max(ranks in result set)
+            </div>
+        </div>
+
+        <div class="sub-title reveal">query intent detection — 9 categories</div>
+        <div class="section-body reveal"><p>Each query is classified into the highest-scoring intent category based on keyword matching and structural signals (price patterns, citation markers, date patterns, URL-like queries). The detected intent surfaces task-specific result cards above the ranked list — e.g., a weather widget, shopping links, or dictionary-style definitions.</p></div>
+        <div class="intent-grid reveal">
+            <div class="intent-chip"><span class="intent-icon">🌤</span><span class="intent-name">weather</span></div>
+            <div class="intent-chip"><span class="intent-icon">🛒</span><span class="intent-name">shopping</span></div>
+            <div class="intent-chip"><span class="intent-icon">📖</span><span class="intent-name">definition</span></div>
+            <div class="intent-chip"><span class="intent-icon">🔧</span><span class="intent-name">how-to</span></div>
+            <div class="intent-chip"><span class="intent-icon">⚠️</span><span class="intent-name">troubleshooting</span></div>
+            <div class="intent-chip"><span class="intent-icon">📄</span><span class="intent-name">docs / API</span></div>
+            <div class="intent-chip"><span class="intent-icon">📰</span><span class="intent-name">news</span></div>
+            <div class="intent-chip"><span class="intent-icon">⭐</span><span class="intent-name">review</span></div>
+            <div class="intent-chip"><span class="intent-icon">🎓</span><span class="intent-name">academic</span></div>
+        </div>
+    </div>
+
+    <!-- CRAWL PERFORMANCE -->
+    <div class="section">
+        <div class="section-label reveal">// 03 · crawl performance</div>
+        <div class="section-title reveal">Three Iterations, 9 Hours Final</div>
+        <div class="section-body reveal">
+            <p>Each run informed the next. The first run exposed per-host delay tuning opportunities and visibility gaps in domain coverage. The second validated a refined configuration on a Wikipedia local test before scaling. The final EC2 run brought the system to production readiness with a stable coordinator, improved timeout handling, and more effective idle-worker utilization — all without sacrificing robots compliance.</p>
+        </div>
+        <div class="crawl-grid reveal">
+            <div class="crawl-card r1">
+                <div class="crawl-run">run 1 — baseline</div>
+                <div class="crawl-stat r1">~85K</div>
+                <div class="crawl-sub">pages in 16 hours</div>
+                <div class="crawl-note">Exposed conservative per-host delays and DNS bottlenecks. Limited visibility into queue composition slowed tuning.</div>
+            </div>
+            <div class="crawl-card r2">
+                <div class="crawl-run">run 2 — tuned</div>
+                <div class="crawl-stat r2">~100K</div>
+                <div class="crawl-sub">pages in 12 hours</div>
+                <div class="crawl-note">Timeout thresholds validated on Wikipedia before scaling. Better handling of pathological hosts, improved idle-worker reuse.</div>
+            </div>
+            <div class="crawl-card r3">
+                <div class="crawl-run">run 3 — production (EC2)</div>
+                <div class="crawl-stat r3">100–150K</div>
+                <div class="crawl-sub">pages in ~9 hours</div>
+                <div class="crawl-note">Final EC2 deployment. Stable coordinator, refined per-page scheduling. Full throughput improvement with no robots compliance sacrifice.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREENSHOTS -->
+    <div class="section">
+        <div class="section-label reveal">// 04 · search in action</div>
+        <div class="section-title reveal">Live Query Results</div>
+
+        <div class="sub-title reveal">ranked results — russia, vaccines, christopher nolan</div>
+        <div class="gallery-grid cols-3 reveal">
+            <div class="gallery-item" onclick="openLightbox('russia-1.png')">
+                <img src="russia-1.png" alt="Russia search results">
+                <div class="gallery-caption"><strong>Query: "russia"</strong>TF-IDF + PageRank ranked results</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('vaccines.png')">
+                <img src="vaccines.png" alt="Vaccines search results">
+                <div class="gallery-caption"><strong>Query: "vaccines"</strong>Multi-domain results with snippet previews</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('nolan1.png')">
+                <img src="nolan1.png" alt="Christopher Nolan search results">
+                <div class="gallery-caption"><strong>Query: "christopher nolan"</strong>Entity-aligned top results</div>
+            </div>
+        </div>
+
+        <div class="sub-title reveal">search features</div>
+        <div class="gallery-grid cols-2 reveal">
+            <div class="gallery-item" onclick="openLightbox('spell-check.png')">
+                <img src="spell-check.png" alt="Spellcheck feature">
+                <div class="gallery-caption"><strong>Spellcheck</strong>Edit distance ≤2, scans 20K index entries</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('search-suggestion.png')">
+                <img src="search-suggestion.png" alt="Search suggestions">
+                <div class="gallery-caption"><strong>Search Suggestions</strong>Prefix-based, up to 25 results</div>
+            </div>
+        </div>
+
+        <div class="sub-title reveal">PDF ingestion + phrase search</div>
+        <div class="gallery-grid cols-3 reveal">
+            <div class="gallery-item" onclick="openLightbox('pdf-indexed.png')">
+                <img src="pdf-indexed.png" alt="PDF indexed confirmation">
+                <div class="gallery-caption"><strong>PDF Upload — Indexed</strong>Apache Tika extraction → synthetic upload:// URL</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('pdf-search.png')">
+                <img src="pdf-search.png" alt="PDF search result">
+                <div class="gallery-caption"><strong>PDF Search Result</strong>Uploaded PDF immediately searchable alongside web pages</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('phrase.png')">
+                <img src="phrase.png" alt="Phrase search">
+                <div class="gallery-caption"><strong>Phrase Search</strong>Positional index enables exact phrase matching</div>
+            </div>
+        </div>
+
+        <div class="callout reveal">
+            <div class="callout-label">key design insight</div>
+            <div class="callout-text">Standardizing on hashed URLs as primary keys across all KVS tables was the single decision that simplified the most integration work. Once the crawler, indexer, and PageRank job agreed on <code style="font-family:var(--mono);font-size:12px">Hasher.hash(url)</code> as the canonical key format, the search frontend reduced almost entirely to orchestrating KVS lookups and score aggregation — no parsing, no re-fetching, no inter-component coordination.</div>
+        </div>
+    </div>
+
+    <!-- TECH STACK -->
+    <div class="section">
+        <div class="section-label reveal">// 05 · tools & methods</div>
+        <div class="section-title reveal">Tech Stack</div>
+        <div class="tag-list reveal">
+            <span class="tag">Java</span>
+            <span class="tag">Distributed KVS</span>
+            <span class="tag">Flame (MapReduce)</span>
+            <span class="tag">Amazon EC2</span>
+            <span class="tag">TF-IDF</span>
+            <span class="tag">PageRank</span>
+            <span class="tag">Inverted Index</span>
+            <span class="tag">Porter Stemmer</span>
+            <span class="tag">Positional Indexing</span>
+            <span class="tag">robots.txt</span>
+            <span class="tag">jsoup</span>
+            <span class="tag">Apache Tika</span>
+            <span class="tag">Edit Distance</span>
+            <span class="tag">Intent Classification</span>
+            <span class="tag">Custom HTTP Server</span>
+            <span class="tag">Thread Pool</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        &lt;— <a href="../../index.html" style="color:var(--accent);text-decoration:none;">back to portfolio</a>
+    </div>
+
+</div>
+
+<script>
+    function openLightbox(src){document.getElementById('lb-img').src=src;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden'}
+    function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow=''}
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()})
+    const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.08,rootMargin:'0px 0px -40px 0px'})
+    document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=`${(i%4)*60}ms`;obs.observe(el)})
+</script>
+</body>
+</html>
