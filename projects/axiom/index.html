@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axiom Shopping Assistant — CIS 5500</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg:#070a0f;--bg-surface:#0d1117;--bg-card:#0f1720;
+            --border:#1a2333;--border-hover:#2a3a50;
+            --accent:#00c896;--accent-blue:#4a9eff;--accent-amber:#f0a830;
+            --accent-purple:#c084fc;--accent-green:#4ade80;
+            --accent-dim:rgba(0,200,150,0.10);
+            --text:#dde6f0;--text-muted:#7a8fa8;--text-dim:#3d4f63;
+            --mono:'JetBrains Mono',monospace;--sans:'Sora',sans-serif;
+        }
+        html{scroll-behavior:smooth}
+        body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.7;overflow-x:hidden}
+        body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,150,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,150,.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+        nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(7,10,15,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+        .nav-back{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--text-muted);text-decoration:none;transition:color .2s}
+        .nav-back:hover{color:var(--accent)}
+        .nav-back svg{width:16px;height:16px}
+        .nav-title{font-family:var(--mono);font-size:12px;color:var(--text-dim);letter-spacing:.06em}
+        .nav-links{display:flex;gap:16px;align-items:center}
+        .nav-link{font-family:var(--mono);font-size:11px;color:var(--text-muted);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:4px;transition:color .2s,border-color .2s}
+        .nav-link:hover{color:var(--accent);border-color:var(--accent)}
+
+        .page-wrap{max-width:1100px;margin:0 auto;padding:0 40px;position:relative;z-index:1}
+
+        /* HERO */
+        .hero{padding:120px 0 80px;border-bottom:1px solid var(--border)}
+        .hero-eyebrow{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
+        .hero-title{font-size:clamp(36px,5vw,60px);font-weight:600;line-height:1.1;letter-spacing:-.02em;margin-bottom:24px}
+        .hero-sub{font-size:17px;color:var(--text-muted);max-width:700px;line-height:1.7;margin-bottom:40px}
+        .hero-meta{display:flex;gap:32px;flex-wrap:wrap}
+        .meta-item{display:flex;flex-direction:column;gap:4px}
+        .meta-label{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+        .meta-val{font-family:var(--mono);font-size:13px;color:var(--text)}
+        .meta-val.green{color:var(--accent)}.meta-val.amber{color:var(--accent-amber)}.meta-val.blue{color:var(--accent-blue)}
+
+        /* SECTION */
+        .section{padding:72px 0;border-bottom:1px solid var(--border)}
+        .section-label{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+        .section-title{font-size:28px;font-weight:600;letter-spacing:-.02em;margin-bottom:32px}
+        .section-body{font-size:15px;color:var(--text-muted);max-width:760px;line-height:1.8}
+        .section-body p+p{margin-top:16px}
+
+        /* DATA SCALE */
+        .scale-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-top:32px}
+        .scale-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center}
+        .scale-num{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--accent);line-height:1;margin-bottom:6px}
+        .scale-num.blue{color:var(--accent-blue)}.scale-num.amber{color:var(--accent-amber)}.scale-num.purple{color:var(--accent-purple)}
+        .scale-label{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase}
+
+        /* ARCH */
+        .arch-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:32px}
+        .arch-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:22px;transition:border-color .2s}
+        .arch-card:hover{border-color:var(--border-hover)}
+        .arch-icon{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+        .arch-icon.green{color:var(--accent)}.arch-icon.blue{color:var(--accent-blue)}.arch-icon.amber{color:var(--accent-amber)}
+        .arch-title{font-size:14px;font-weight:600;margin-bottom:6px}
+        .arch-desc{font-size:13px;color:var(--text-muted);line-height:1.6}
+        .arch-stack{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+        .arch-tag{font-family:var(--mono);font-size:10px;color:var(--text-dim);border:1px solid var(--border);border-radius:3px;padding:2px 6px}
+
+        /* ROLE CARDS */
+        .role-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:32px}
+        .role-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .2s}
+        .role-card:hover{border-color:var(--border-hover)}
+        .role-icon{font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:12px}
+        .role-title{font-size:15px;font-weight:600;margin-bottom:8px}
+        .role-desc{font-size:14px;color:var(--text-muted);line-height:1.65}
+
+        /* PERF TABLE */
+        .perf-wrap{overflow-x:auto;margin-top:32px}
+        .perf-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
+        .perf-table th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg-surface);white-space:nowrap}
+        .perf-table td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text-muted);white-space:nowrap}
+        .perf-table tr:last-child td{border-bottom:none}
+        .perf-table tr:hover td{background:var(--bg-card)}
+        .perf-table .route-name{color:var(--text);font-weight:500}
+        .speedup-huge{color:var(--accent);font-weight:700}
+        .speedup-big{color:var(--accent-blue)}
+        .speedup-med{color:var(--text-muted)}
+        .speedup-flat{color:var(--text-dim)}
+
+        /* SPEEDUP BAR */
+        .speedup-bar-wrap{margin-top:40px}
+        .speedup-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+        .speedup-route{font-family:var(--mono);font-size:12px;color:var(--text-muted);width:220px;flex-shrink:0;text-align:right}
+        .speedup-track{flex:1;background:var(--bg-card);border-radius:4px;height:22px;overflow:hidden;border:1px solid var(--border)}
+        .speedup-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:8px;font-family:var(--mono);font-size:11px;font-weight:700;white-space:nowrap;transition:width 1s ease}
+        .fill-green{background:linear-gradient(90deg,rgba(0,200,150,.25),rgba(0,200,150,.15));color:var(--accent)}
+        .fill-blue{background:linear-gradient(90deg,rgba(74,158,255,.25),rgba(74,158,255,.15));color:var(--accent-blue)}
+        .fill-amber{background:linear-gradient(90deg,rgba(240,168,48,.2),rgba(240,168,48,.1));color:var(--accent-amber)}
+
+        /* PAGES GRID */
+        .pages-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:32px}
+        .page-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;transition:border-color .2s}
+        .page-card:hover{border-color:var(--border-hover)}
+        .page-route{font-family:var(--mono);font-size:11px;color:var(--accent-blue);margin-bottom:6px}
+        .page-name{font-size:14px;font-weight:600;margin-bottom:5px}
+        .page-desc{font-size:13px;color:var(--text-muted);line-height:1.55}
+
+        /* GALLERY */
+        .gallery-grid{display:grid;gap:12px}
+        .gallery-grid.cols-2{grid-template-columns:1fr 1fr}
+        .gallery-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+        .gallery-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s}
+        .gallery-item:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+        .gallery-item img{width:100%;height:280px;object-fit:cover;object-position:top;display:block}
+        .gallery-item img.tall{height:340px}
+        .gallery-caption{padding:10px 14px 12px;font-family:var(--mono);font-size:11px;color:var(--text-muted);border-top:1px solid var(--border)}
+        .gallery-caption strong{color:var(--text);display:block;margin-bottom:2px;font-size:12px}
+
+        /* CALLOUT */
+        .callout{background:rgba(0,200,150,.05);border:1px solid rgba(0,200,150,.2);border-radius:8px;padding:20px 24px;margin-top:28px}
+        .callout.amber{background:rgba(240,168,48,.05);border-color:rgba(240,168,48,.2)}
+        .callout.blue{background:rgba(74,158,255,.05);border-color:rgba(74,158,255,.2)}
+        .callout-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+        .callout.amber .callout-label{color:var(--accent-amber)}
+        .callout.blue .callout-label{color:var(--accent-blue)}
+        .callout-text{font-size:14px;color:var(--text-muted);line-height:1.7}
+
+        /* SUB */
+        .sub-title{font-family:var(--mono);font-size:13px;color:var(--accent-blue);letter-spacing:.06em;margin:44px 0 20px;display:flex;align-items:center;gap:10px}
+        .sub-title::after{content:'';flex:1;height:1px;background:var(--border)}
+        .sub-title:first-child{margin-top:0}
+
+        /* TAGS */
+        .tag-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+        .tag{font-family:var(--mono);font-size:12px;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;padding:5px 12px;background:var(--bg-card);transition:border-color .2s,color .2s}
+        .tag:hover{border-color:var(--accent);color:var(--accent)}
+
+        /* COVERAGE */
+        .cov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
+        .cov-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center}
+        .cov-pct{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--accent);line-height:1;margin-bottom:4px}
+        .cov-label{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase}
+
+        /* LIGHTBOX */
+        .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;align-items:center;justify-content:center;cursor:pointer}
+        .lightbox.open{display:flex}
+        .lightbox img{max-width:92vw;max-height:88vh;object-fit:contain;border:1px solid var(--border);border-radius:6px}
+        .lb-close{position:fixed;top:24px;right:28px;font-family:var(--mono);font-size:22px;color:var(--text-muted);cursor:pointer}
+
+        /* REVEAL */
+        .reveal{opacity:0;transform:translateY(24px);transition:opacity .5s ease,transform .5s ease}
+        .reveal.visible{opacity:1;transform:none}
+
+        .footer{padding:48px 0;text-align:center;font-family:var(--mono);font-size:12px;color:var(--text-dim)}
+
+        @media(max-width:700px){
+            nav{padding:0 20px}.page-wrap{padding:0 20px}.hero{padding:100px 0 60px}
+            .arch-row,.gallery-grid.cols-2,.gallery-grid.cols-3,.cov-grid{grid-template-columns:1fr}
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-back" href="../../index.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3L5 8l5 5"/></svg>
+        back to portfolio
+    </a>
+    <span class="nav-title">// databases & full-stack</span>
+    <div class="nav-links">
+        <a class="nav-link" href="https://github.com/JiajunLeoTan/cis550-final-project" target="_blank">github ↗</a>
+        <a class="nav-link" href="https://team45-cis550-final-project.vercel.app" target="_blank">live demo ↗</a>
+    </div>
+</nav>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lb-close">✕</span>
+    <img id="lb-img" src="" alt="">
+</div>
+
+<div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow reveal">Penn CIS 5500 · Database & Information Systems</div>
+        <h1 class="hero-title reveal">Axiom Shopping<br>Assistant</h1>
+        <p class="hero-sub reveal">Full-stack shopping analytics platform over 1.4M Amazon products and 3M reviews — PostgreSQL on AWS RDS, Express/Node backend, React/Vite frontend. Engineered materialized views, composite indexes, and EXPLAIN ANALYZE query rewrites achieving up to 12,133× query speedup. The flagship value-rankings query dropped from 17 seconds to 1.4 ms.</p>
+        <div class="hero-meta reveal">
+            <div class="meta-item"><span class="meta-label">Database</span><span class="meta-val">PostgreSQL / AWS RDS</span></div>
+            <div class="meta-item"><span class="meta-label">Backend</span><span class="meta-val">Node.js / Express</span></div>
+            <div class="meta-item"><span class="meta-label">Frontend</span><span class="meta-val">React / Vite</span></div>
+            <div class="meta-item"><span class="meta-label">Peak speedup</span><span class="meta-val green">12,133×</span></div>
+            <div class="meta-item"><span class="meta-label">Test coverage</span><span class="meta-val blue">96.5% lines</span></div>
+        </div>
+    </div>
+
+    <!-- DATA SCALE -->
+    <div class="section">
+        <div class="section-label reveal">// 01 · data scale</div>
+        <div class="section-title reveal">What's in the Database</div>
+        <div class="section-body reveal">
+            <p>Three Amazon datasets ingested through a Python/pandas/psycopg2 ETL pipeline — product metadata, a review/comment export, and the McAuley Lab Pure-IDs 5-Core dense interaction dataset. Entity resolution deduplicates products by ASIN, canonicalizes brand names from noisy product titles (5-product minimum threshold), falls back from child ASINs to parent ASINs for reviews, and removes orphan rows before ingestion.</p>
+        </div>
+        <div class="scale-grid reveal">
+            <div class="scale-card"><div class="scale-num">1.4M</div><div class="scale-label">Products</div></div>
+            <div class="scale-card"><div class="scale-num blue">3.0M</div><div class="scale-label">Reviews</div></div>
+            <div class="scale-card"><div class="scale-num amber">26.5K</div><div class="scale-label">Brands</div></div>
+            <div class="scale-card"><div class="scale-num purple">1.28M</div><div class="scale-label">Users</div></div>
+            <div class="scale-card"><div class="scale-num">248</div><div class="scale-label">Categories</div></div>
+            <div class="scale-card"><div class="scale-num blue">17</div><div class="scale-label">API routes</div></div>
+        </div>
+        <div class="callout reveal" style="margin-top:28px">
+            <div class="callout-label">schema design</div>
+            <div class="callout-text">5-table BCNF schema: Categories (248) → Products (1.4M) ← Reviews (3M) → Users (1.28M), with Brands as a separate entity extracted from product titles. No display names stored redundantly on Products — category and brand names join in at query time. Three materialized views (<code style="font-family:var(--mono);font-size:12px">mv_category_compare</code>, <code style="font-family:var(--mono);font-size:12px">mv_brand_performance</code>, <code style="font-family:var(--mono);font-size:12px">mv_value_score_components</code>) serve as derived read models without breaking normalization.</div>
+        </div>
+    </div>
+
+    <!-- ARCHITECTURE -->
+    <div class="section">
+        <div class="section-label reveal">// 02 · architecture</div>
+        <div class="section-title reveal">3-Tier Stack</div>
+        <div class="arch-row reveal">
+            <div class="arch-card">
+                <div class="arch-icon green">// client</div>
+                <div class="arch-title">React / Vite SPA</div>
+                <div class="arch-desc">8 distinct pages, shared API client wrapper, global <code style="font-family:var(--mono);font-size:12px">?optimized=1</code> query-mode toggle visible in the UI. Cart state in localStorage. Charts via custom bar/line components.</div>
+                <div class="arch-stack">
+                    <span class="arch-tag">React</span><span class="arch-tag">Vite</span><span class="arch-tag">React Router</span><span class="arch-tag">Recharts</span><span class="arch-tag">Vitest</span>
+                </div>
+            </div>
+            <div class="arch-card">
+                <div class="arch-icon blue">// api</div>
+                <div class="arch-title">Node.js / Express</div>
+                <div class="arch-desc">17 public routes with input validation (malformed ASINs, invalid ranges, zero-sum weights, oversized cart arrays). Original and optimized SQL branches per route. TTL in-memory cache for stable aggregates. Parameterized queries throughout.</div>
+                <div class="arch-stack">
+                    <span class="arch-tag">Express</span><span class="arch-tag">node-postgres</span><span class="arch-tag">TTL cache</span><span class="arch-tag">Supertest</span>
+                </div>
+            </div>
+            <div class="arch-card">
+                <div class="arch-icon amber">// database</div>
+                <div class="arch-title">PostgreSQL / AWS RDS</div>
+                <div class="arch-desc">5-table BCNF schema, 3 materialized views, composite indexes, trigram index for full-text search, expression index on discount percentage. EXPLAIN ANALYZE benchmark suite (5 measured runs, 1 warmup).</div>
+                <div class="arch-stack">
+                    <span class="arch-tag">PostgreSQL</span><span class="arch-tag">AWS RDS</span><span class="arch-tag">pg_trgm</span><span class="arch-tag">Materialized views</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTRIBUTIONS -->
+    <div class="section">
+        <div class="section-label reveal">// 03 · contributions</div>
+        <div class="section-title reveal">What I Built</div>
+        <div class="section-body reveal">
+            <p>Through Milestone 3, the team worked collaboratively on schema design and preliminary SQL. After M3, the workload concentrated significantly — the M3 query sketches had hard-coded literals, missing pagination, non-existent fields, and placeholder table names that didn't survive contact with the real dataset and schema.</p>
+        </div>
+        <div class="role-grid">
+            <div class="role-card reveal">
+                <div class="role-icon">// data</div>
+                <div class="role-title">ETL Pipeline & AWS Setup</div>
+                <div class="role-desc">Found and integrated the Amazon Reviews 2023 dataset. Built the full Python ingestion pipeline — streaming CSV chunks for multi-million-row inputs, ASIN entity resolution, brand canonicalization, parent-ASIN fallback, and orphan filtering. Provisioned the team's AWS RDS PostgreSQL instance and loaded the cleaned data.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-icon">// backend</div>
+                <div class="role-title">API Design & SQL Revision</div>
+                <div class="role-desc">Converted all M3 SQL sketches into validated, parameterized API routes with stable JSON response shapes. Repaired broken assumptions (wrong field names, missing pagination, hard-coded literals). Added 7 routes not present in M3: <code style="font-family:var(--mono);font-size:12px">/categories</code>, <code style="font-family:var(--mono);font-size:12px">/brands</code>, <code style="font-family:var(--mono);font-size:12px">/products/:asin</code>, <code style="font-family:var(--mono);font-size:12px">/products/category</code>, <code style="font-family:var(--mono);font-size:12px">/products/brand</code>, <code style="font-family:var(--mono);font-size:12px">/products/top-value</code>, <code style="font-family:var(--mono);font-size:12px">/products/value-rankings</code>.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-icon">// performance</div>
+                <div class="role-title">Query Optimization</div>
+                <div class="role-desc">Designed and built all three materialized views, composite indexes, and optimized SQL branches. Implemented the EXPLAIN ANALYZE benchmark runner (1 warmup, 5 timed runs, baseline comparison). Achieved up to 12,133× speedup on value rankings by indexing the precomputed default score in <code style="font-family:var(--mono);font-size:12px">mv_value_score_components</code>.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-icon">// frontend</div>
+                <div class="role-title">Frontend Integration & Deployment</div>
+                <div class="role-desc">Integrated all API routes into the React frontend. Built the query-mode toggle, cart context, product detail rating fallbacks, and analytics chart components. Deployed the frontend to Vercel and backend to Render with correct CORS and environment configuration.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PERFORMANCE -->
+    <div class="section">
+        <div class="section-label reveal">// 04 · performance</div>
+        <div class="section-title reveal">Query Optimization Results</div>
+        <div class="section-body reveal">
+            <p>Benchmarked with EXPLAIN ANALYZE on a live AWS RDS instance (5 measured runs, 1 discarded warmup, 1 s pause between phases). The three most impactful wins all come from the same root cause: expensive cross-table aggregations running live on every request, eliminated by precomputed materialized views with covering indexes.</p>
+        </div>
+
+        <div class="speedup-bar-wrap reveal">
+            <div class="speedup-row">
+                <div class="speedup-route">value-rankings</div>
+                <div class="speedup-track">
+                    <div class="speedup-fill fill-green" style="width:100%">12,133× &nbsp;·&nbsp; 17,047 ms → 1.4 ms</div>
+                </div>
+            </div>
+            <div class="speedup-row">
+                <div class="speedup-route">categories/compare</div>
+                <div class="speedup-track">
+                    <div class="speedup-fill fill-green" style="width:65%">7,963× &nbsp;·&nbsp; 3,114 ms → 0.4 ms</div>
+                </div>
+            </div>
+            <div class="speedup-row">
+                <div class="speedup-route">helpful-reviews</div>
+                <div class="speedup-track">
+                    <div class="speedup-fill fill-blue" style="width:35%">1,290× &nbsp;·&nbsp; 9,118 ms → 7.1 ms</div>
+                </div>
+            </div>
+            <div class="speedup-row">
+                <div class="speedup-route">brands/performance</div>
+                <div class="speedup-track">
+                    <div class="speedup-fill fill-blue" style="width:22%">644× &nbsp;·&nbsp; 2,366 ms → 3.7 ms</div>
+                </div>
+            </div>
+            <div class="speedup-row">
+                <div class="speedup-route">top-value</div>
+                <div class="speedup-track">
+                    <div class="speedup-fill fill-amber" style="width:14%">380× &nbsp;·&nbsp; 322,838 ms → 494 ms</div>
+                </div>
+            </div>
+            <div class="speedup-row">
+                <div class="speedup-route">trending</div>
+                <div class="speedup-track">
+                    <div class="speedup-fill fill-amber" style="width:7%">196× &nbsp;·&nbsp; 1,905 ms → 9.7 ms</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sub-title reveal">optimization techniques</div>
+        <div class="role-grid" style="grid-template-columns: repeat(auto-fill,minmax(260px,1fr))">
+            <div class="role-card reveal">
+                <div class="role-icon">// matviews</div>
+                <div class="role-title">Materialized Views</div>
+                <div class="role-desc"><code style="font-family:var(--mono);font-size:12px">mv_category_compare</code> — precomputed category price/rating aggregates. <code style="font-family:var(--mono);font-size:12px">mv_brand_performance</code> — brand product and review rollups. <code style="font-family:var(--mono);font-size:12px">mv_value_score_components</code> — normalized per-product score dimensions with an indexed default Balanced score (0.4/0.2/0.2/0.2).</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-icon">// indexing</div>
+                <div class="role-title">Composite Indexes</div>
+                <div class="role-desc">Trigram index on product titles for keyword search. Partial expression index on <code style="font-family:var(--mono);font-size:12px">(1 - price/list_price)</code> for valid discounted products (keeps Deals sub-millisecond). Review timestamp + ASIN index for time-window filtering. Covering index <code style="font-family:var(--mono);font-size:12px">idx_mv_value_components_default_score_cover</code> for the precomputed value score path.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-icon">// query restructuring</div>
+                <div class="role-title">Query Rewrites</div>
+                <div class="role-desc">Helpful-reviews: rank top 10 reviews first, then compute reviewer stats only for those users (eliminates full-table reviewer aggregation). Category/brand listing: page product rows before joining display names. Value rankings: split default vs custom weight paths so the common Balanced preset uses the precomputed indexed score rather than re-scoring.</div>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-icon">// caching</div>
+                <div class="role-title">Route-Level TTL Cache</div>
+                <div class="role-desc">In-memory TTL cache for category/brand metadata, category comparison, and review trend by category. Review trend SQL is already selective enough that the first EXPLAIN ANALYZE is comparable — the cache targets repeat users where latency matters most.</div>
+            </div>
+        </div>
+
+        <div class="callout amber reveal">
+            <div class="callout-label">top-value anomaly</div>
+            <div class="callout-text">The top-value query baseline was 322,838 ms — over 5 minutes — because it used correlated subqueries to compute per-product category averages, re-scanning the full 1.4M products table once per row. The optimized path reads precomputed <code style="font-family:var(--mono);font-size:12px">cat_avg_price</code> and <code style="font-family:var(--mono);font-size:12px">cat_avg_stars</code> directly from <code style="font-family:var(--mono);font-size:12px">mv_value_score_components</code> — same output, 652× faster at 494 ms.</div>
+        </div>
+    </div>
+
+    <!-- PAGES -->
+    <div class="section">
+        <div class="section-label reveal">// 05 · features</div>
+        <div class="section-title reveal">8 Pages, 17 Routes</div>
+        <div class="pages-grid reveal">
+            <div class="page-card">
+                <div class="page-route">/</div>
+                <div class="page-name">Home</div>
+                <div class="page-desc">Keyword search, trending picks by category, and discounted deal cards for fast discovery.</div>
+            </div>
+            <div class="page-card">
+                <div class="page-route">/browse</div>
+                <div class="page-name">Browse</div>
+                <div class="page-desc">Keyword search + category exploration with URL-backed filters. Links into full category pages.</div>
+            </div>
+            <div class="page-card">
+                <div class="page-route">/deals</div>
+                <div class="page-name">Deals</div>
+                <div class="page-desc">Discount-ranked products with price cap and star filters. Sort by deal quality, not title relevance.</div>
+            </div>
+            <div class="page-card">
+                <div class="page-route">/category · /brand</div>
+                <div class="page-name">Category & Brand Pages</div>
+                <div class="page-desc">Paginated product lists per category or brand with rating/price filters preserved in the URL.</div>
+            </div>
+            <div class="page-card">
+                <div class="page-route">/product/:asin</div>
+                <div class="page-name">Product Detail</div>
+                <div class="page-desc">Review histogram, helpful reviews with reviewer credibility context, cheaper alternatives, and cart actions. Rating falls back to linked-review evidence when catalog counts are unreliable.</div>
+            </div>
+            <div class="page-card">
+                <div class="page-route">/cart</div>
+                <div class="page-name">Cart</div>
+                <div class="page-desc">Persists ASINs in localStorage. Backend aggregates list price, current price, and total savings for the cart.</div>
+            </div>
+            <div class="page-card">
+                <div class="page-route">/analytics</div>
+                <div class="page-name">Analytics Dashboard</div>
+                <div class="page-desc">Category comparisons (price/rating/count), brand leaderboard by review evidence, monthly review trends split by reviewer-credibility group (≥10 reviews vs. occasional).</div>
+            </div>
+            <div class="page-card">
+                <div class="page-route">/value-rankings</div>
+                <div class="page-name">Value Rankings</div>
+                <div class="page-desc">User-weighted score across rating strength, review depth, price efficiency, and recent activity. Preset buttons + live sliders. Top-25 ranked list + "top value" shortlist filtered by review recency.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREENSHOTS -->
+    <div class="section">
+        <div class="section-label reveal">// 06 · screenshots</div>
+        <div class="section-title reveal">Live Application</div>
+
+        <div class="sub-title reveal">value rankings — interactive weight sliders</div>
+        <div class="gallery-grid cols-2 reveal">
+            <div class="gallery-item" onclick="openLightbox('value-rankings.png')">
+                <img class="tall" src="value-rankings.png" alt="Value Rankings page">
+                <div class="gallery-caption"><strong>Value Rankings — Balanced preset</strong>Weight sliders, top result card, top-value shortlist</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('value-top25.png')">
+                <img class="tall" src="value-top25.png" alt="Value Rankings top 25 list">
+                <div class="gallery-caption"><strong>Value Rankings — Top 25 list</strong>Ranked by normalized composite score (0–100)</div>
+            </div>
+        </div>
+
+        <div class="sub-title reveal">analytics dashboard</div>
+        <div class="gallery-grid cols-3 reveal">
+            <div class="gallery-item" onclick="openLightbox('analytics-categories.png')">
+                <img src="analytics-categories.png" alt="Analytics categories chart">
+                <div class="gallery-caption"><strong>Categories Compared</strong>Product count / avg rating / avg price — 7,963× speedup via materialized view</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('analytics-brands.png')">
+                <img src="analytics-brands.png" alt="Brand leaderboard">
+                <div class="gallery-caption"><strong>Brand Leaderboard</strong>Review score, linked reviews, helpful votes, product avg — 644× speedup</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('analytics-trend.png')">
+                <img src="analytics-trend.png" alt="Review trend chart">
+                <div class="gallery-caption"><strong>High vs Low-Activity Reviewers</strong>Monthly rating trend split by reviewer credibility, 2000–2023</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TESTING -->
+    <div class="section">
+        <div class="section-label reveal">// 07 · testing</div>
+        <div class="section-title reveal">Test Coverage</div>
+        <div class="section-body reveal">
+            <p>Server tests mock the database pool and cover validation, query selection, caching, and response shape for all routes. Client tests cover API path building, routing (including dynamic category/brand/product routes), cart behavior, product-detail rating fallbacks, chart components, formatting helpers, and the query-mode toggle.</p>
+        </div>
+        <div class="cov-grid reveal">
+            <div class="cov-item"><div class="cov-pct">96.5%</div><div class="cov-label">Lines</div></div>
+            <div class="cov-item"><div class="cov-pct">96.5%</div><div class="cov-label">Statements</div></div>
+            <div class="cov-item"><div class="cov-pct">86.5%</div><div class="cov-label">Functions</div></div>
+            <div class="cov-item"><div class="cov-pct">85.9%</div><div class="cov-label">Branches</div></div>
+        </div>
+    </div>
+
+    <!-- TECH -->
+    <div class="section">
+        <div class="section-label reveal">// 08 · tools & methods</div>
+        <div class="section-title reveal">Tech Stack</div>
+        <div class="tag-list reveal">
+            <span class="tag">PostgreSQL</span><span class="tag">AWS RDS</span>
+            <span class="tag">Node.js</span><span class="tag">Express</span>
+            <span class="tag">React</span><span class="tag">Vite</span><span class="tag">React Router</span>
+            <span class="tag">Python</span><span class="tag">pandas</span><span class="tag">psycopg2</span>
+            <span class="tag">Materialized Views</span><span class="tag">EXPLAIN ANALYZE</span>
+            <span class="tag">pg_trgm</span><span class="tag">Composite Indexes</span>
+            <span class="tag">TTL Cache</span><span class="tag">Vitest</span><span class="tag">Supertest</span>
+            <span class="tag">Vercel</span><span class="tag">Render</span><span class="tag">3NF / BCNF</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        &lt;— <a href="../../index.html" style="color:var(--accent);text-decoration:none;">back to portfolio</a>
+    </div>
+
+</div>
+
+<script>
+    function openLightbox(src){document.getElementById('lb-img').src=src;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden'}
+    function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow=''}
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()})
+    const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.08,rootMargin:'0px 0px -40px 0px'})
+    document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=`${(i%4)*60}ms`;obs.observe(el)})
+</script>
+</body>
+</html>
