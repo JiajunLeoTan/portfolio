@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PennCloud — CIS 5050</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg:#070a0f;--bg-surface:#0d1117;--bg-card:#0f1720;
+            --border:#1a2333;--border-hover:#2a3a50;
+            --accent:#00c896;--accent-blue:#4a9eff;--accent-amber:#f0a830;
+            --accent-purple:#c084fc;--accent-red:#ff6b6b;
+            --accent-dim:rgba(0,200,150,.10);
+            --text:#dde6f0;--text-muted:#7a8fa8;--text-dim:#3d4f63;
+            --mono:'JetBrains Mono',monospace;--sans:'Sora',sans-serif;
+        }
+        html{scroll-behavior:smooth}
+        body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.7;overflow-x:hidden}
+        body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,150,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,150,.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+        nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(7,10,15,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+        .nav-back{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--text-muted);text-decoration:none;transition:color .2s}
+        .nav-back:hover{color:var(--accent)}
+        .nav-back svg{width:16px;height:16px}
+        .nav-title{font-family:var(--mono);font-size:12px;color:var(--text-dim);letter-spacing:.06em}
+        .nav-tag{font-family:var(--mono);font-size:11px;color:var(--accent-blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.25);padding:3px 10px;border-radius:20px}
+
+        .page-wrap{max-width:1100px;margin:0 auto;padding:0 40px;position:relative;z-index:1}
+
+        /* HERO */
+        .hero{padding:120px 0 80px;border-bottom:1px solid var(--border)}
+        .hero-eyebrow{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
+        .hero-title{font-size:clamp(36px,5vw,60px);font-weight:600;line-height:1.1;letter-spacing:-.02em;margin-bottom:24px}
+        .hero-sub{font-size:17px;color:var(--text-muted);max-width:700px;line-height:1.7;margin-bottom:40px}
+        .hero-meta{display:flex;gap:32px;flex-wrap:wrap}
+        .meta-item{display:flex;flex-direction:column;gap:4px}
+        .meta-label{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+        .meta-val{font-family:var(--mono);font-size:13px;color:var(--text)}
+        .meta-val.green{color:var(--accent)}.meta-val.blue{color:var(--accent-blue)}.meta-val.amber{color:var(--accent-amber)}
+
+        /* SECTION */
+        .section{padding:72px 0;border-bottom:1px solid var(--border)}
+        .section-label{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+        .section-title{font-size:28px;font-weight:600;letter-spacing:-.02em;margin-bottom:32px}
+        .section-body{font-size:15px;color:var(--text-muted);max-width:760px;line-height:1.8}
+        .section-body p+p{margin-top:16px}
+
+        /* ARCHITECTURE DIAGRAM */
+        .arch-diagram{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:32px;margin-top:32px;font-family:var(--mono);font-size:13px}
+        .arch-row{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap}
+        .arch-box{border:1px solid;border-radius:6px;padding:10px 18px;text-align:center;min-width:130px}
+        .arch-box.browser{color:var(--text-muted);border-color:var(--border);background:var(--bg)}
+        .arch-box.dispatcher{color:var(--accent-amber);border-color:rgba(240,168,48,.35);background:rgba(240,168,48,.05)}
+        .arch-box.frontend{color:var(--accent-blue);border-color:rgba(74,158,255,.35);background:rgba(74,158,255,.05)}
+        .arch-box.coordinator{color:var(--accent-purple);border-color:rgba(192,132,252,.35);background:rgba(192,132,252,.05)}
+        .arch-box.backend{color:var(--accent);border-color:rgba(0,200,150,.35);background:rgba(0,200,150,.05)}
+        .arch-box.storage{color:var(--text-muted);border-color:var(--border);background:var(--bg)}
+        .arch-label{font-size:11px;font-weight:700;margin-bottom:2px}
+        .arch-port{font-size:10px;opacity:.7}
+        .arch-arrow-v{text-align:center;color:var(--text-dim);font-size:13px;padding:4px 0}
+        .arch-arrow-h{color:var(--text-dim);padding:0 8px;font-size:16px;align-self:center}
+        .arch-group{display:flex;align-items:center;gap:0}
+        .arch-note{font-size:11px;color:var(--text-dim);margin-top:20px;text-align:center;line-height:1.6}
+
+        /* SERVICE CARDS */
+        .service-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:32px}
+        .service-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:22px;transition:border-color .2s}
+        .service-card:hover{border-color:var(--border-hover)}
+        .service-card.coordinator{border-top:3px solid var(--accent-purple)}
+        .service-card.backend{border-top:3px solid var(--accent)}
+        .service-card.dispatcher{border-top:3px solid var(--accent-amber)}
+        .service-card.frontend{border-top:3px solid var(--accent-blue)}
+        .svc-header{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+        .svc-name{font-size:15px;font-weight:600}
+        .svc-port{font-family:var(--mono);font-size:11px;color:var(--text-dim)}
+        .svc-desc{font-size:14px;color:var(--text-muted);line-height:1.65}
+        .svc-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+        .svc-tag{font-family:var(--mono);font-size:10px;color:var(--text-dim);border:1px solid var(--border);border-radius:3px;padding:2px 7px}
+
+        /* SPEC GRID */
+        .spec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:28px}
+        .spec-row{display:flex;flex-direction:column;gap:4px;padding:16px 20px;background:var(--bg-card)}
+        .spec-key{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+        .spec-val{font-family:var(--mono);font-size:13px;color:var(--text)}
+
+        /* SCHEMA CARDS */
+        .schema-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:28px}
+        .schema-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px}
+        .schema-name{font-family:var(--mono);font-size:12px;color:var(--accent-blue);font-weight:600;margin-bottom:10px}
+        .schema-row{font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.8;margin-bottom:2px}
+        .schema-row span{color:var(--text-muted)}
+
+        /* PHASE TABLE */
+        .phase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:28px}
+        .phase-item{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:12px 16px;display:flex;align-items:center;gap:10px}
+        .phase-num{font-family:var(--mono);font-size:10px;color:var(--text-dim);min-width:50px}
+        .phase-name{font-size:13px;color:var(--text-muted)}
+        .phase-done{font-family:var(--mono);font-size:11px;color:var(--accent);margin-left:auto}
+
+        /* GALLERY */
+        .gallery-grid{display:grid;gap:12px}
+        .gallery-grid.cols-2{grid-template-columns:1fr 1fr}
+        .gallery-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+        .gallery-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s}
+        .gallery-item:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+        .gallery-item img{width:100%;height:300px;object-fit:cover;object-position:top;display:block}
+        .gallery-item img.tall{height:380px}
+        .gallery-caption{padding:10px 14px 12px;font-family:var(--mono);font-size:11px;color:var(--text-muted);border-top:1px solid var(--border)}
+        .gallery-caption strong{color:var(--text);display:block;margin-bottom:2px;font-size:12px}
+
+        /* CALLOUT */
+        .callout{background:rgba(0,200,150,.05);border:1px solid rgba(0,200,150,.2);border-radius:8px;padding:20px 24px;margin-top:28px}
+        .callout.blue{background:rgba(74,158,255,.05);border-color:rgba(74,158,255,.2)}
+        .callout.amber{background:rgba(240,168,48,.05);border-color:rgba(240,168,48,.2)}
+        .callout-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+        .callout.blue .callout-label{color:var(--accent-blue)}
+        .callout.amber .callout-label{color:var(--accent-amber)}
+        .callout-text{font-size:14px;color:var(--text-muted);line-height:1.7}
+
+        /* SUB */
+        .sub-title{font-family:var(--mono);font-size:13px;color:var(--accent-blue);letter-spacing:.06em;margin:44px 0 20px;display:flex;align-items:center;gap:10px}
+        .sub-title::after{content:'';flex:1;height:1px;background:var(--border)}
+        .sub-title:first-child{margin-top:0}
+
+        /* TAGS */
+        .tag-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+        .tag{font-family:var(--mono);font-size:12px;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;padding:5px 12px;background:var(--bg-card);transition:border-color .2s,color .2s}
+        .tag:hover{border-color:var(--accent);color:var(--accent)}
+
+        /* LIGHTBOX */
+        .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;align-items:center;justify-content:center;cursor:pointer}
+        .lightbox.open{display:flex}
+        .lightbox img{max-width:92vw;max-height:88vh;object-fit:contain;border:1px solid var(--border);border-radius:6px}
+        .lb-close{position:fixed;top:24px;right:28px;font-family:var(--mono);font-size:22px;color:var(--text-muted);cursor:pointer}
+
+        .reveal{opacity:0;transform:translateY(24px);transition:opacity .5s ease,transform .5s ease}
+        .reveal.visible{opacity:1;transform:none}
+        .footer{padding:48px 0;text-align:center;font-family:var(--mono);font-size:12px;color:var(--text-dim)}
+
+        @media(max-width:700px){
+            nav{padding:0 20px}.page-wrap{padding:0 20px}.hero{padding:100px 0 60px}
+            .service-grid,.schema-grid,.gallery-grid.cols-2,.gallery-grid.cols-3{grid-template-columns:1fr}
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-back" href="../../index.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3L5 8l5 5"/></svg>
+        back to portfolio
+    </a>
+    <span class="nav-title">// distributed systems</span>
+    <span class="nav-tag">C++17 · KV · W=2/N=3</span>
+</nav>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lb-close">✕</span>
+    <img id="lb-img" src="" alt="">
+</div>
+
+<div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow reveal">Penn CIS 5050 · Distributed Systems</div>
+        <h1 class="hero-title reveal">PennCloud</h1>
+        <p class="hero-sub reveal">A distributed cloud platform built from scratch in C++17 — Google Drive-style file storage, Gmail-style webmail, and a live admin console, all backed by a replicated key-value store. Four cooperating services implement primary-backup replication with W=2 quorum writes, WAL-backed durability, automatic failover, and a React/TypeScript UI.</p>
+        <div class="hero-meta reveal">
+            <div class="meta-item"><span class="meta-label">Language</span><span class="meta-val">C++17 + React/TypeScript</span></div>
+            <div class="meta-item"><span class="meta-label">Replication</span><span class="meta-val">W=2 of N=3 quorum</span></div>
+            <div class="meta-item"><span class="meta-label">Durability</span><span class="meta-val green">WAL + checkpoint</span></div>
+            <div class="meta-item"><span class="meta-label">Build phases</span><span class="meta-val blue">12 (all done)</span></div>
+        </div>
+    </div>
+
+    <!-- ARCHITECTURE -->
+    <div class="section">
+        <div class="section-label reveal">// 01 · architecture</div>
+        <div class="section-title reveal">4 Services, 1 KV Backbone</div>
+        <div class="section-body reveal">
+            <p>All persistent state lives in the KV backend — frontends are fully stateless, which means any frontend can validate any session, serve any file, or deliver any email. The coordinator never proxies data; it only answers "where is the primary right now?" The dispatcher is off the hot path after the initial redirect, so it can't become a bottleneck.</p>
+        </div>
+
+        <div class="arch-diagram reveal">
+            <div class="arch-row" style="margin-bottom:8px">
+                <div class="arch-box browser"><div class="arch-label">Browser</div><div class="arch-port">React SPA</div></div>
+            </div>
+            <div class="arch-arrow-v">↓ HTTP + cookies</div>
+            <div class="arch-row" style="gap:12px;margin-bottom:8px">
+                <div class="arch-box dispatcher"><div class="arch-label">Dispatcher</div><div class="arch-port">:8080 — HTTP 302</div></div>
+                <div class="arch-arrow-h">→</div>
+                <div class="arch-box frontend"><div class="arch-label">Frontend ×2</div><div class="arch-port">:8001 / :8002</div></div>
+            </div>
+            <div class="arch-arrow-v">↓ Router → Controller → Service → KvClient</div>
+            <div class="arch-row" style="gap:12px;margin-bottom:8px">
+                <div class="arch-box coordinator"><div class="arch-label">Coordinator</div><div class="arch-port">:9000 — lookup only</div></div>
+                <div class="arch-arrow-h">→</div>
+                <div class="arch-box backend"><div class="arch-label">Backend ×3</div><div class="arch-port">:9001 primary · :9002–9003 secondaries</div></div>
+            </div>
+            <div class="arch-arrow-v">↓ fsync WAL + periodic checkpoint</div>
+            <div class="arch-row">
+                <div class="arch-box storage"><div class="arch-label">Disk</div><div class="arch-port">WAL · checkpoint · data</div></div>
+            </div>
+            <div class="arch-note">Frontends are stateless — KV-backed sessions mean any frontend validates any session.<br>Control port accepts KILL / RESTART, enabling live fault injection from the admin console.</div>
+        </div>
+
+        <div class="service-grid reveal">
+            <div class="service-card coordinator">
+                <div class="svc-header">
+                    <span class="svc-name">Coordinator</span>
+                    <span class="svc-port">:9000</span>
+                </div>
+                <div class="svc-desc">Service registry and liveness tracker. Backends register on startup; the coordinator monitors heartbeats and answers "who is the primary for service X?" at lookup time. Stateless with respect to KV data — it only tracks topology. Frontend KvClients hit the coordinator once to resolve the primary, then connect directly.</div>
+                <div class="svc-tags"><span class="svc-tag">liveness window 15s</span><span class="svc-tag">service groups</span><span class="svc-tag">primary lookup</span></div>
+            </div>
+            <div class="service-card backend">
+                <div class="svc-header">
+                    <span class="svc-name">Backend</span>
+                    <span class="svc-port">:9001–9003</span>
+                </div>
+                <div class="svc-desc">Primary-backup KV store. Writes on the primary fan out to 2 secondaries via <code style="font-family:var(--mono);font-size:12px">PeerLink</code> async queues; the primary waits for W=2 ACKs before responding to the client. WAL appended with <code style="font-family:var(--mono);font-size:12px">fsync</code> on every write; periodic checkpoints truncate the log. Secondaries replay the WAL on restart and catch up automatically. Each write is version-stamped for monotonic ordering.</div>
+                <div class="svc-tags"><span class="svc-tag">W=2/N=3 quorum</span><span class="svc-tag">WAL + fsync</span><span class="svc-tag">checkpoint 30s</span><span class="svc-tag">WAL replay recovery</span><span class="svc-tag">version stamps</span></div>
+            </div>
+            <div class="service-card dispatcher">
+                <div class="svc-header">
+                    <span class="svc-name">Dispatcher</span>
+                    <span class="svc-port">:8080</span>
+                </div>
+                <div class="svc-desc">HTTP load balancer. Frontends register via a heartbeat port; the dispatcher tracks liveness and issues <code style="font-family:var(--mono);font-size:12px">HTTP 302 Found</code> redirects to an alive frontend. Off the data path after the initial redirect — no request proxying, no throughput bottleneck. Temporary redirect (not cacheable) ensures the client always gets a live target.</div>
+                <div class="svc-tags"><span class="svc-tag">HTTP 302</span><span class="svc-tag">heartbeat monitoring</span><span class="svc-tag">not cacheable</span></div>
+            </div>
+            <div class="service-card frontend">
+                <div class="svc-header">
+                    <span class="svc-name">Frontend</span>
+                    <span class="svc-port">:8001 / :8002</span>
+                </div>
+                <div class="svc-desc">Stateless HTTP server written from scratch — custom HTTP/1.1 parser, multipart upload handler, cookie management, thread-per-connection concurrency. Routes dispatch to <code style="font-family:var(--mono);font-size:12px">AuthController</code>, <code style="font-family:var(--mono);font-size:12px">StorageController</code>, <code style="font-family:var(--mono);font-size:12px">MailController</code>, or <code style="font-family:var(--mono);font-size:12px">AdminController</code>. Pooled KvClient connections to the backend. Serves the React SPA bundle from <code style="font-family:var(--mono);font-size:12px">ui/dist/</code>.</div>
+                <div class="svc-tags"><span class="svc-tag">custom HTTP parser</span><span class="svc-tag">multipart upload</span><span class="svc-tag">session cookies</span><span class="svc-tag">KvClient pool</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DISTRIBUTED KV -->
+    <div class="section">
+        <div class="section-label reveal">// 02 · distributed kv store</div>
+        <div class="section-title reveal">Wire Protocol, Replication & Durability</div>
+        <div class="section-body reveal">
+            <p>Every inter-service message — KV commands, replication traffic, coordinator heartbeats — uses the same binary-safe, ASCII-decimal length-prefixed wire protocol. The length prefix survives binary payloads, commas, CRLFs, and null bytes in values, which matters because file chunks are stored raw in the KV store.</p>
+        </div>
+
+        <div class="spec-grid reveal">
+            <div class="spec-row"><span class="spec-key">Wire protocol</span><span class="spec-val">ASCII-decimal length-prefix</span></div>
+            <div class="spec-row"><span class="spec-key">Commands</span><span class="spec-val">GET · PUT · CPUT · DELETE · LIST_ROWS · LIST_COLS</span></div>
+            <div class="spec-row"><span class="spec-key">Replication model</span><span class="spec-val">Primary-backup, W=2 of N=3</span></div>
+            <div class="spec-row"><span class="spec-key">Consistency</span><span class="spec-val">Sequential (primary serializes)</span></div>
+            <div class="spec-row"><span class="spec-key">WAL format</span><span class="spec-val">BE64 version + encoded command + CRLF</span></div>
+            <div class="spec-row"><span class="spec-key">Checkpoint interval</span><span class="spec-val">30 seconds</span></div>
+            <div class="spec-row"><span class="spec-key">Fault tolerance</span><span class="spec-val">Survives 1 replica loss</span></div>
+            <div class="spec-row"><span class="spec-key">Recovery</span><span class="spec-val">WAL replay from last checkpoint</span></div>
+        </div>
+
+        <div class="callout reveal">
+            <div class="callout-label">quorum write path</div>
+            <div class="callout-text">On a client write, the primary: (1) appends to the WAL with <code style="font-family:var(--mono);font-size:12px">fsync</code>, (2) fans the command out to both secondaries via async <code style="font-family:var(--mono);font-size:12px">PeerLink</code> queues, (3) waits for W=2 ACKs (including its own), then (4) applies to the in-memory store and responds. A secondary that crashes and restarts replays its WAL from the last checkpoint and catches up automatically — no manual intervention, no data loss within the persisted window.</div>
+        </div>
+
+        <div class="sub-title reveal">KV schema — 3 service namespaces</div>
+        <div class="schema-grid reveal">
+            <div class="schema-card">
+                <div class="schema-name">auth:</div>
+                <div class="schema-row">row: <span>auth:users</span></div>
+                <div class="schema-row">col: <span>&lt;username&gt;</span></div>
+                <div class="schema-row">val: <span>JSON {username, salt, passwordHash, timestamps}</span></div>
+                <div class="schema-row" style="margin-top:8px">row: <span>auth:sessions</span></div>
+                <div class="schema-row">col: <span>&lt;sessionId&gt;</span></div>
+                <div class="schema-row">val: <span>JSON {sessionId, username, createdAt, expiresAt}</span></div>
+                <div class="schema-row" style="margin-top:8px;color:var(--accent-blue);font-size:10px">salted SHA-256 · 30 min TTL · any frontend validates any session</div>
+            </div>
+            <div class="schema-card">
+                <div class="schema-name">storage:</div>
+                <div class="schema-row">row: <span>storage:user:&lt;username&gt;</span></div>
+                <div class="schema-row">col: <span>root → &lt;rootNodeId&gt;</span></div>
+                <div class="schema-row">col: <span>node:&lt;nodeId&gt; → StorageNodeRecord</span></div>
+                <div class="schema-row">col: <span>children:&lt;folderId&gt; → {name: nodeId}</span></div>
+                <div class="schema-row">col: <span>content:&lt;fileId&gt;:chunkCount</span></div>
+                <div class="schema-row">col: <span>content:&lt;fileId&gt;:chunk:N → raw bytes</span></div>
+                <div class="schema-row" style="margin-top:8px;color:var(--accent-blue);font-size:10px">UUIDv4 node IDs · 1 MB chunks · move() cycle-detection</div>
+            </div>
+            <div class="schema-card">
+                <div class="schema-name">mail:</div>
+                <div class="schema-row">row: <span>mail:user:&lt;username&gt;</span></div>
+                <div class="schema-row">col: <span>inbox:list → [messageId, ...]</span></div>
+                <div class="schema-row">col: <span>sent:list → [messageId, ...]</span></div>
+                <div class="schema-row">col: <span>msg:&lt;messageId&gt; → EmailRecord JSON</span></div>
+                <div class="schema-row" style="margin-top:8px">EmailRecord: <span>{from, to, subject, body, timestamp, messageId}</span></div>
+                <div class="schema-row" style="margin-top:8px;color:var(--accent-blue);font-size:10px">atomic inbox/sent append · UUIDv4 message IDs</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREENSHOTS -->
+    <div class="section">
+        <div class="section-label reveal">// 03 · application</div>
+        <div class="section-title reveal">Drive · Mail · Admin Console</div>
+
+        <div class="sub-title reveal">file storage & webmail</div>
+        <div class="gallery-grid cols-3 reveal">
+            <div class="gallery-item" onclick="openLightbox('drive.png')">
+                <img src="drive.png" alt="Drive page">
+                <div class="gallery-caption"><strong>My Drive</strong>Folder tree, file upload, UUIDv4-backed rename/move</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('inbox.png')">
+                <img class="tall" src="inbox.png" alt="Inbox page">
+                <div class="gallery-caption"><strong>Inbox</strong>Per-user message list, inline reading pane</div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('sent.png')">
+                <img class="tall" src="sent.png" alt="Sent page">
+                <div class="gallery-caption"><strong>Sent</strong>Sent mail with full-message preview</div>
+            </div>
+        </div>
+
+        <div class="sub-title reveal">admin console — live cluster control</div>
+        <div class="gallery-grid cols-2 reveal">
+            <div class="gallery-item" onclick="openLightbox('admin-cluster.png')">
+                <img src="admin-cluster.png" alt="Admin cluster status and KV browser">
+                <div class="gallery-caption">
+                    <strong>Cluster Status + KV Browser</strong>
+                    Live primary/secondary status, Kill/Restart per node, row prefix search (auth:users shown with 8 columns)
+                </div>
+            </div>
+            <div class="gallery-item" onclick="openLightbox('admin-restart.png')">
+                <img src="admin-restart.png" alt="Admin restart confirmation">
+                <div class="gallery-caption">
+                    <strong>Restart Backend Confirmation</strong>
+                    Sends RESTART to control port :9011 → process exits 75 → supervisor loop restarts it → WAL replay catches up
+                </div>
+            </div>
+        </div>
+
+        <div class="callout blue reveal">
+            <div class="callout-label">fault tolerance demo</div>
+            <div class="callout-text">Kill a secondary from the admin console — writes continue because W=2 quorum is still satisfied with the primary + one remaining secondary. Click Restart; the secondary comes back, replays its WAL from the last checkpoint, and catches up to the current primary version. All this is verifiable live through the KV browser without restarting any user-facing service.</div>
+        </div>
+    </div>
+
+    <!-- BUILD -->
+    <div class="section">
+        <div class="section-label reveal">// 04 · build</div>
+        <div class="section-title reveal">12 Phases, All Done</div>
+        <div class="section-body reveal">
+            <p>Each phase has an explicit exit criterion — a plain C++ test binary under <code style="font-family:var(--mono);font-size:13px">tests/</code> that exits 0 on success. No external test framework. The smoke test script resets data, starts the full cluster in daemon mode, runs all 10 phase test binaries, then exercises a live cluster end-to-end via <code style="font-family:var(--mono);font-size:13px">curl</code> including a kill-quorum-recover cycle. Full run: 2–4 minutes.</p>
+        </div>
+        <div class="phase-grid reveal">
+            <div class="phase-item"><span class="phase-num">phase 0</span><span class="phase-name">Skeleton & foundations</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 1</span><span class="phase-name">Wire protocol</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 2</span><span class="phase-name">Single-node KV backend</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 3</span><span class="phase-name">Replication (W=2/N=3)</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 4</span><span class="phase-name">Coordinator & dispatcher</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 5</span><span class="phase-name">HTTP stack</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 6</span><span class="phase-name">Auth & session</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 7</span><span class="phase-name">Storage service</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 8</span><span class="phase-name">Mail service</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 9</span><span class="phase-name">Admin console</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 10</span><span class="phase-name">React UI</span><span class="phase-done">✓</span></div>
+            <div class="phase-item"><span class="phase-num">phase 11</span><span class="phase-name">Smoke test & runbook</span><span class="phase-done">✓</span></div>
+        </div>
+
+        <div class="callout amber reveal">
+            <div class="callout-label">design principles</div>
+            <div class="callout-text">Dependency injection by constructor throughout — no singletons, no globals. RAII for all resources (file descriptors, sockets, mutexes). Interfaces only where components are genuinely swappable (<code style="font-family:var(--mono);font-size:12px">IKvStorage</code>, <code style="font-family:var(--mono);font-size:12px">ICommandHandler</code>). Thread-per-connection concurrency with <code style="font-family:var(--mono);font-size:12px">std::thread</code>. Stable UUIDv4 node IDs mean rename and move operations never move content bytes — only metadata updates.</div>
+        </div>
+    </div>
+
+    <!-- TECH STACK -->
+    <div class="section">
+        <div class="section-label reveal">// 05 · tools & methods</div>
+        <div class="section-title reveal">Tech Stack</div>
+        <div class="tag-list reveal">
+            <span class="tag">C++17</span>
+            <span class="tag">GNU Make</span>
+            <span class="tag">React + Vite</span>
+            <span class="tag">TypeScript</span>
+            <span class="tag">Tailwind CSS</span>
+            <span class="tag">Primary-Backup Replication</span>
+            <span class="tag">Write-Ahead Log</span>
+            <span class="tag">Quorum Writes (W=2/N=3)</span>
+            <span class="tag">SHA-256 (libssl)</span>
+            <span class="tag">Custom HTTP/1.1 Parser</span>
+            <span class="tag">Multipart Upload</span>
+            <span class="tag">Binary-Safe Wire Protocol</span>
+            <span class="tag">RAII</span>
+            <span class="tag">Dependency Injection</span>
+            <span class="tag">UUIDv4</span>
+            <span class="tag">fsync Durability</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        &lt;— <a href="../../index.html" style="color:var(--accent);text-decoration:none;">back to portfolio</a>
+    </div>
+
+</div>
+
+<script>
+    function openLightbox(src){document.getElementById('lb-img').src=src;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden'}
+    function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow=''}
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()})
+    const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.08,rootMargin:'0px 0px -40px 0px'})
+    document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=`${(i%4)*60}ms`;obs.observe(el)})
+</script>
+</body>
+</html>
